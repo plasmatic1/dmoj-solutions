@@ -1,0 +1,40 @@
+//============================================================================
+// Name        : ModularMultiplicativeInverse.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef unsigned long long ll;
+typedef pair<int, int> p;
+
+ll n, m;
+
+ll fastpow(ll x, ll y){
+	ll curr = 1, curr_pow = x, curr_mask = 1;
+
+	while(curr_mask <= y){
+		if(y & curr_mask){
+			curr = (curr * curr_pow) % m;
+		}
+
+		curr_pow = (curr_pow * curr_pow) % m;
+		curr_mask <<= 1;
+	}
+
+	return curr;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> m;
+
+	printf("%llu\n", fastpow(n, m - 2));
+}

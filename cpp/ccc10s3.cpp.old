@@ -1,0 +1,128 @@
+//============================================================================
+// Name        : FireHose.cpp
+// Author      :
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+struct p{
+	int d, i;
+
+	friend bool operator<(const p &a, const p &o){
+		return a.d < o.d;
+	}
+
+	bool operator>(const p &o){
+		return d > o.d;
+	}
+};
+
+struct mm{
+	int minv, maxv;
+
+	mm(int min, int max) : minv(min), maxv(max){}
+
+	int range(){
+		return maxv - minv;
+	}
+
+	mm merge(mm other){
+		return {min(minv, other.minv), max(maxv, other.maxv)};
+	}
+};
+
+const int MAX = 1001, CIR = 1000000;
+int h, k, buf, house[MAX], dist[MAX], shift[MAX];
+p maxdis;
+vector<mm> merger;
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+
+	cin >> h;
+
+	for (int i = 0; i < h; ++i) {
+		cin >> house[i];
+	}
+
+	sort(house, house + h);
+
+	maxdis = {INT_MIN, INT_MIN};
+	int h0 = h - 1;
+	for (int i = 0; i < h0; ++i) {
+		dist[i] = house[i + 1] - house[i];
+		maxdis = max(maxdis, {dist[i], i});
+	}
+
+	dist[h0] = house[0] - house[h0] + CIR;
+	maxdis = max(maxdis, {dist[h0], h0});
+
+	cin >> k;
+
+	//Remove the largest distance and creates a new shifted array for the other dists
+
+	for (int i = maxdis.i + 1; i < h; ++i) {
+		shift[i - maxdis.i] = dist[i];
+	}
+
+	int offset = h - maxdis.i;
+	for (int i = 0; i < maxdis.i; ++i) {
+		shift[i + offset] = dist[i];
+	}
+
+	// Convert into pfx sum array
+
+	for(int i = 1; i < h; i++){
+		shift[i] += shift[i - 1];
+	}
+
+//	copy(shift, shift + h0, shift + 1);
+//	shift[0] = 0;
+
+//	printf("shift: ");
+//	for (int i = 0; i < h; ++i) {
+//		printf("%d, ", shift[i]);
+//	}
+//	printf("\n");//
+
+	for (int i = 0; i < h; ++i) {
+		merger.emplace_back(shift[i], shift[i]);
+	}
+
+	//Merging
+
+	while(merger.size() > k){
+		int mini = -1, mind = INT_MAX;
+
+		int sz = merger.size() - 1;
+		for (int i = 0; i < sz; ++i) {
+			int range = merger[i].merge(merger[i + 1]).range();
+
+			if(range < mind){
+				mind = range;
+				mini = i;
+			}
+		}
+
+		mm merge = merger[mini].merge(merger[mini + 1]);
+		merger.erase(merger.begin() + mini, merger.begin() + mini + 2);
+		merger.emplace(merger.begin() + mini, merge);
+	}
+
+	int maxv = INT_MIN;
+	for (int i = 0; i < k; ++i) {
+		maxv = max(maxv, merger[i].range());
+	}
+
+	printf("%d\n", (maxv + (maxv % 2)) / 2);
+
+	return 0;
+}

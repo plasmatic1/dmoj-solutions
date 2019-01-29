@@ -1,0 +1,130 @@
+//============================================================================
+// Name        : RogerSegmentTreeNodeBased.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+struct segmin{
+	segmin *left;
+	segmin *right;
+	int l, r, val;
+
+	segmin(int l0, int r0) : left(nullptr), right(nullptr), l(l0), r(r0), val(0){}
+
+	int init(int* arr){
+		if(l == r){
+			return val = arr[l];
+		}
+
+		int mid = (l + r) / 2;
+
+		left = new segmin(l, mid);
+		right = new segmin(mid + 1, r);
+
+		return val = min(left->init(arr), right->init(arr));
+	}
+
+	int query(int ql, int qr){
+		if(r < ql || l > qr){
+			return INT_MAX;
+		}
+
+		if(l >= ql && r <= qr){
+			return val;
+		}
+
+		return min(left->query(ql, qr), right->query(ql, qr));
+	}
+
+	int update(int i, int v){
+		if(i < l || i > r){
+			return val;
+		}
+
+		if(l == i && r == i){
+			return val += v;
+		}
+
+		return val = min(left->update(i, v), right->update(i, v));
+	}
+};
+
+struct segmax{
+	segmax *left;
+	segmax *right;
+	int l, r, val;
+
+	segmax(int l0, int r0) : left(nullptr), right(nullptr), l(l0), r(r0), val(0){}
+
+	int init(int* arr){
+		if(l == r){
+			return val = arr[l];
+		}
+
+		int mid = (l + r) / 2;
+
+		left = new segmax(l, mid);
+		right = new segmax(mid + 1, r);
+
+		return val = max(left->init(arr), right->init(arr));
+	}
+
+	int query(int ql, int qr){
+		if(r < ql || l > qr){
+			return INT_MIN;
+		}
+
+		if(l >= ql && r <= qr){
+			return val;
+		}
+
+		return max(left->query(ql, qr), right->query(ql, qr));
+	}
+
+	int update(int i, int v){
+		if(i < l || i > r){
+			return val;
+		}
+
+		if(l == i && r == i){
+			return val += v;
+		}
+
+		return val = max(left->update(i, v), right->update(i, v));
+	}
+};
+
+const int MAX = 50001;
+int n, q, ba, bb,
+	arr[MAX];
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> q;
+
+	for (int i = 1; i <= n; ++i) {
+		cin >> arr[i];
+	}
+
+	segmin mintree(1, n);
+	segmax maxtree(1, n);
+
+	mintree.init(arr);
+	maxtree.init(arr);
+
+	for (int i = 0; i < q; ++i) {
+		cin >> ba >> bb;
+
+		printf("%d\n", maxtree.query(ba, bb) - mintree.query(ba, bb));
+	}
+}

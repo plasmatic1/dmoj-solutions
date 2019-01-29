@@ -1,0 +1,80 @@
+//============================================================================
+// Name        : BoosterCushions.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+const int MAX = 200001;
+int m, n, k,
+	ppl[MAX];
+ll total = 0;
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> m >> n >> k;
+
+	for (int i = 0; i < k; ++i) {
+		cin >> ppl[i];
+	}
+
+	sort(ppl, ppl + k, greater<int>());
+
+//	for (int i = 1; i <= k; ++i) {
+//		ppl += ppl[i - 1];
+//	}
+
+	m = min(k, m);
+
+	int sep = -1, mv = k;
+
+	if(k % m != 1){
+		sep = (int)ceil(k / (double)m);//, ;
+	}
+	else{
+		sep = k / m;
+		mv = k / m * m;
+	}
+
+	for (int i = 0; i < sep; ++i) {
+		int last = ppl[i] - 1;
+
+//		printf("on i=%d\b", i);
+
+		for (int j = i; j < mv; j += sep) {
+			int newl = last - ppl[j] + 1;
+			total += newl;
+			last = newl + ppl[j];
+
+//			printf("going through person %d, last of %d, newl of %d\n", j, last, newl);
+		}
+	}
+
+	if(k % m == 1){
+		total += ppl[k - 2] - ppl[k - 1];
+	}
+
+//	if(k != fullrows){
+//		int last = ppl[sep - 1] - 1;
+//
+//		for (int i = sep - 1; i < k; i += sep) {
+//			int newl = last - ppl[i] + 1;
+//			total += newl;
+//			last = newl + ppl[i];
+//
+//			printf("going through EX person %d, last of %d, newl of %d\n", i, last, newl);
+//		}
+//	}
+
+	printf("%lld\n", total);
+}

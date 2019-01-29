@@ -1,0 +1,56 @@
+//============================================================================
+// Name        : TheGreatFireOfKores.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+struct p{
+	ll x, y;
+};
+
+const int MAX = 100001;
+int n, m;
+p comms[MAX], bunkers[MAX];
+ll ba, bb, totald = 0;
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for (int i = 0; i < n; ++i) {
+		cin >> ba >> bb;
+		comms[i] = {ba, bb};
+	}
+
+	cin >> m;
+
+	for (int i = 0; i < m; ++i) {
+		cin >> ba >> bb;
+		bunkers[i] = {ba, bb};
+	}
+
+	// Calculations
+
+	for (int i = 0; i < n; ++i) {
+		ll total = LLONG_MAX;
+		for (int j = 0; j < m; ++j) {
+			total = min(total, abs(bunkers[j].x - comms[i].x) + abs(bunkers[j].y - comms[i].y));
+		}
+
+		totald += total;
+	}
+
+	// Output
+
+	printf("%lld\n", totald);
+}

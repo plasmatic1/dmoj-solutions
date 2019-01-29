@@ -1,0 +1,141 @@
+//============================================================================
+// Name        : SchoolTraversal.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+#define DEBUG
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+int n, q, ba, bb, bw;
+
+struct ed{
+	int v, w;
+
+	ed(int v0, int w0) : v(v0), w(w0){}
+	ed() : v(-1), w(-1){}
+};
+
+const int MAX = 6001, B_MAX = 18;
+int dist[MAX];
+ll distt[MAX];
+
+int sptable[B_MAX][MAX + 1];
+vector<ed> matrix[MAX]; // Adjecency Matrix
+
+int query(int a, int b){ // Querys nodes `a` and `b`
+	// Checking if they are the same
+	if(a == b){
+		return a;
+	}
+
+	if(dist[a] > dist[b]){
+		swap(a, b);
+	}
+
+	// Equalizing levels
+	int delta = dist[b] - dist[a];
+	for (int i = B_MAX - 1; i >= 0; --i) {
+		if(delta & (1 << i)){
+			b = sptable[i][b];
+		}
+	}
+
+	// Checking if they are the same again now that levels are equal
+	if(a == b){
+		return a;
+	}
+
+	// Moving up the chain
+	for(int i = B_MAX - 1; i >= 0; --i){
+		if(sptable[i][a] != sptable[i][b] && sptable[i][a] != -1 && sptable[i][b] != -1){
+			a = sptable[i][a];
+			b = sptable[i][b];
+		}
+	}
+
+	return sptable[0][a];
+}
+
+// DFS
+void dfs(int curr, int lvl, ll dis, int parent){
+	dist[curr] = lvl;
+	distt[curr] = dis;
+	sptable[0][curr] = parent;
+
+	for(ed adj : matrix[curr]){
+		if(adj.v != parent){
+			dfs(adj.v, lvl + 1, dis + adj.w, curr);
+		}
+	}
+}
+
+void build(){
+	// DFS to build first parents and arrays
+	dfs(1, 0, 0, -1);
+
+	// Building sparse table
+	for (int i = 1; i < B_MAX; ++i) {
+		for (int j = 1; j <= n; ++j) {
+			int directpar = sptable[i - 1][j];
+
+			if(directpar != -1){
+				sptable[i][j] = sptable[i - 1][directpar];
+			}
+			else{
+				sptable[i][j] = -1;
+			}
+		}
+	}
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for (int i = 1; i < n; ++i) {
+		cin >> ba >> bb >> bw;
+		ba++;
+		bb++;
+
+		matrix[ba].emplace_back(bb, bw);
+		matrix[bb].emplace_back(ba, bw);
+	}
+
+	build();
+
+	cin >> q;
+
+	for (int i = 0; i < q; ++i) {
+		cin >> ba >> bb;
+		ba++;
+		bb++;
+
+		int par = query(ba, bb);
+
+//		printf("par=%d a=%d b=%d\n", par, ba,bb);
+		printf("%lld\n", distt[ba] + distt[bb] - 2 * distt[par]);
+	}
+}
+
+/*
+ *
+4
+0 1 1
+0 2 1
+2 3 5
+4
+1 2
+0 1
+0 2
+1 3
+ */

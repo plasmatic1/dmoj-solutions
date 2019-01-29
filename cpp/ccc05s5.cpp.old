@@ -1,0 +1,56 @@
+//============================================================================
+// Name        : PinballRanking.cpp
+// Author      :
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAX = 1000000000;
+int n, buf, zero_c = 1;
+double summ = 0;
+unordered_map<int, int> totaltree;
+
+void add(int x, int z){
+	for(; x <= MAX; x += x & -x){
+		totaltree[x] += z;
+	}
+}
+
+int sum(int x){
+	int sum = 0;
+
+	for(; x > 0; x -= x & -x){
+		sum += totaltree[x];
+	}
+
+	return sum;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for (int i = 0; i < n; ++i) {
+		cin >> buf;
+
+		if(buf == 0){
+			summ += sum(MAX) + zero_c;
+			zero_c++;
+		}
+		else{
+			summ += 1 + (sum(MAX) - sum(buf));
+			add(buf, 1);
+		}
+	}
+
+	printf("%.2f\n", summ / n);
+
+	return 0;
+}

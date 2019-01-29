@@ -1,0 +1,166 @@
+//============================================================================
+// Name        : MaximumStrategicSavings.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+//#define DEBUG
+
+using namespace std;
+
+typedef long long ll;
+
+const int __E_MAX = 10000, MAX = __E_MAX * __E_MAX;
+
+//struct pii{
+//	int a, b;
+//
+//	pii(int aa, int bb) : a(aa), b(bb){}
+//};
+
+struct edge{
+	int a, b, cost;
+
+	edge(int aa, int bb, int costt) : a(aa), b(bb), cost(costt){}
+
+	friend bool operator<(const edge &a, const edge &b){
+		return a.cost < b.cost;
+	}
+};
+
+struct disjoint{
+	int size;
+	unordered_map<ll, ll> parent, rank;
+
+	disjoint() : size(-1){}
+
+	void create(ll sizee){
+		size = sizee;
+		parent.reserve(size);
+		rank.reserve(size);
+	}
+
+	ll root(ll x){
+		if(parent.find(x) == parent.end()){
+			return x;
+		}
+		return root(parent[x]);
+	}
+
+	ll same(ll x, ll y){
+		return root(x) == root(y);
+	}
+
+	void comb(ll x, ll y){
+		ll rx = root(x), ry = root(y);
+
+		if(rank[rx] > rank[ry]){
+			parent[ry] = rx;
+		}
+		else if(rank[rx] < rank[ry]){
+			parent[rx] = ry;
+		}
+		else{
+			parent[ry] = rx;
+			rank[rx]++;
+		}
+	}
+};
+
+ll kruskal(vector<edge> &sorted_edges, disjoint &dset, ll size, ll edge_count){
+	ll save = 0;
+	dset.create(size);
+
+#ifdef DEBUG
+	printf("Begin\n");
+#endif
+
+	for (ll i = 0; i < edge_count; ++i) {
+		edge e = sorted_edges[i];
+
+#ifdef DEBUG
+		printf(" -- On Edge (%d,%d,%d)\n", e.a, e.b, e.cost);
+#endif
+
+		if(dset.same(e.a, e.b)){
+#ifdef DEBUG
+			printf("Found same edge!, adding %d (now %d)\n", e.cost, save + e.cost);
+#endif
+
+			save += e.cost;
+		}
+		else{
+#ifdef DEBUG
+			printf("Combining cities %d %d\n", e.a, e.b);
+#endif
+
+			dset.comb(e.a, e.b);
+		}
+	}
+
+#ifdef DEBUG
+	printf("save=%d\n", save);
+#endif
+
+	return save;
+}
+
+/*
+ * n = planets
+ * m = cities
+ * p = flights (cities)
+ * q = portals (planets)
+ *
+ * planet i, city j
+ *
+ * i * m + j
+ */
+int n, m, p, q, bufa, bufb, bufc;
+vector<edge> edges;
+disjoint dset;
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> m >> p >> q;
+
+	for (int i = 0; i < p; ++i) {
+		cin >> bufa >> bufb >> bufc;
+		bufa--;
+		bufb--;
+
+		for (int j = 0; j < n; ++j) {
+			ll planet_offset = j * m;
+
+			edges.emplace_back(planet_offset + bufa, planet_offset + bufb, bufc);
+		}
+	}
+
+	for (int i = 0; i < q; ++i) {
+		cin >> bufa >> bufb >> bufc;
+		bufa--;
+		bufb--;
+
+		ll planet_consta = bufa * m, planet_constb = bufb * m;
+
+		for (int j = 0; j < m; ++j) {
+			edges.emplace_back(planet_consta + j, planet_constb + j, bufc);
+		}
+	}
+
+	sort(edges.begin(), edges.end());
+
+#ifdef DEBUG
+	printf("edges: [");
+	for(edge e : edges){
+		printf("(%d,%d,%d), ", e.a, e.b, e.cost);
+	}
+	printf("]\n");
+#endif
+
+	printf("%lld\n", kruskal(edges, dset, n * m, p * n + m * q));
+}

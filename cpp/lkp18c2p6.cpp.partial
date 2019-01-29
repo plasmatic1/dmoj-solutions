@@ -1,0 +1,85 @@
+//============================================================================
+// Name        : Reconstruction.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+struct ed{
+	int v, w;
+
+	ed(int v0, int w0) : v(v0), w(w0){}
+	ed() : v(-1), w(-1){}
+};
+
+const int MAX = 100001;
+int n, m, k, ba, bb, bc, las;
+bool imp[MAX];
+vector<ed> matrix[MAX];
+ll tot = 0;
+
+bool dfs(int cur, int par){
+	bool pass = imp[cur];
+
+//	printf("cur=%d par=%d\n", cur, par);
+//	setbuf(stdout,0);
+
+	for(ed adj : matrix[cur]){
+		if(adj.v != par){
+			pass |= dfs(adj.v, cur);
+		}
+	}
+
+	return imp[cur] = pass;
+}
+
+void ddfs(int cur, int par, int lasted){
+	tot += lasted;
+
+	for(ed adj : matrix[cur]){
+		if(imp[adj.v] && adj.v != par){
+			ddfs(adj.v, cur, adj.w);
+		}
+	}
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> m >> k; // m = 0
+
+	for (int i = 0; i < k; ++i) {
+		cin >> ba;
+		las = ba;
+		imp[ba] = true;
+	}
+
+	for (int i = 1; i < n; ++i) {
+		cin >> ba >> bb >> bc;
+
+		matrix[ba].emplace_back(bb, bc);
+		matrix[bb].emplace_back(ba, bc);
+	}
+
+	dfs(las, -1);
+	ddfs(las, -1, 0);
+
+	printf("%lld\n", tot);
+}
+
+/*
+5 0 2
+2 5
+2 4 3
+1 2 1
+3 2 2
+5 1 4
+ */

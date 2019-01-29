@@ -1,0 +1,54 @@
+//============================================================================
+// Name        : Granica.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+//Gotta grab them free partial points
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+const int MAX = 100;
+int n, buf, maxv = INT_MIN,
+	nums[MAX];
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for (int i = 0; i < n; ++i) {
+		cin >> nums[i];
+		maxv = max(maxv, nums[i]);
+	}
+
+	for (int i = 2; i <= maxv; ++i) {
+		int mod = -1;
+		bool pass = true;
+
+		for (int j = 0; j < n; ++j) {
+			if(mod == -1){
+				mod = nums[j] % i;
+			}
+
+			if(nums[j] % i != mod){
+				pass = false;
+				break;
+			}
+		}
+
+		if(pass){
+			printf("%d ", i);
+		}
+	}
+
+	printf("\n");
+}

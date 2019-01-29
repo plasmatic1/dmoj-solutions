@@ -1,0 +1,124 @@
+//============================================================================
+// Name        : BattlePlan.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+//#define DEBUG
+
+using namespace std;
+
+typedef long long ll;
+
+struct ed{
+	int v, w;
+
+	ed(int v0, int w0) : v(v0), w(w0){}
+	ed() : v(-1), w(-1){}
+
+	friend bool operator<(const ed &a, const ed &b){
+		return a.w > b.w;
+	}
+};
+
+const int MAX = 100001;
+int n, bp, bd, bc;
+ll cost[MAX], finalcost[MAX], dist[MAX];
+deque<int> process;
+//priority_queue<ed> nextt;
+deque<ed> nextt;
+vector<ed> matrix[MAX];
+ed nexta[MAX];
+
+int findfirstlower(int costt, int node){
+	while(nexta[node].v != n){
+		node = nexta[node].v;
+
+		if(cost[node] < costt){
+			return node;
+		}
+	}
+
+	return -1;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+
+	//Input
+
+	cin >> n;
+
+	int n0 = n - 1;
+	for (int i = 1; i <= n0; ++i) {
+		cin >> bp >> bd >> bc;
+
+		matrix[bp].emplace_back(i, bd);
+		nexta[i] = {bp, bd};
+		cost[i] = bc;
+	}
+
+	//Setting up data structures
+
+	fill(dist, dist + n + 1, LLONG_MAX);
+	dist[n] = 0;
+	nextt.emplace_back(n, 0);
+
+	cost[n] = LLONG_MAX;
+
+	//BFS The Tree
+
+	while(!nextt.empty()){
+		ed curr = nextt.front();
+		nextt.pop_front();
+
+		for(ed adj : matrix[curr.v]){
+			int alt = curr.w + adj.w;
+
+			if(alt < dist[adj.v]){
+				dist[adj.v] = alt;
+
+				nextt.emplace_back(adj.v, alt);
+				process.push_back(adj.v);
+			}
+		}
+	}
+
+#ifdef DEBUG
+	printf("dist: [");
+	for(int i = 0; i <= n; i++){
+		printf("%lld, ", dist[i]);
+	}
+	printf("]\n");
+#endif
+
+	//Processing stuff and getting dists
+
+	while(!process.empty()){
+		int curr = process.front();
+		ed nextn = nexta[curr];
+		process.pop_front();
+
+		int flower = findfirstlower(cost[curr], curr);
+
+		if(flower == -1){
+			finalcost[curr] = cost[curr] * dist[curr];
+		}
+		else{
+			assert(finalcost[nextn.v] != 0);
+
+//			printf("dist curr=%d, flower=%d, %lld\n", curr, flower, dist[curr] - dist[flower]);
+			finalcost[curr] = (cost[curr] * (dist[curr] - dist[flower])) + finalcost[flower];
+		}
+	}
+
+	//Output
+
+	for (int i = 1; i <= n0; ++i) {
+		printf("%lld\n", finalcost[i]);
+	}
+}

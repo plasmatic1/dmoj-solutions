@@ -1,0 +1,153 @@
+//============================================================================
+// Name        : PersonalAssistant.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+//#define DEBUG
+
+using namespace std;
+
+typedef long long ll;
+
+struct p{
+	int i;
+	ll t, h;
+
+	p(int ii, ll aa, ll bb) : i(ii), t(aa), h(bb){}
+
+	p() : i(-1), t(LONG_LONG_MAX), h(0){}
+
+	friend bool operator<(const p &a, const p &b){
+//		if(a.h == b.h){
+//			return a.t < b.t;
+//		}
+		return a.t < b.t;
+	}
+};
+
+struct anime{
+	ll r, l, h;
+	/*
+	 * r = begin time
+	 * l = length
+	 * h = happiness
+	 */
+
+	anime(ll rr, ll leng, ll hh) : r(rr), l(leng), h(hh){}
+
+	anime() : r(-1), l(-1), h(-1){}
+};
+
+bool cmp(const p &a, const p &b){
+	return a.t < b.t;
+}
+
+const int MAX = 100002;
+
+int n;
+ll rb, lb, hb, dp[MAX], dph[MAX];
+anime animes[MAX];
+//set<p> hapls;
+map<ll, p, greater<ll>> hapls;
+
+void settl(int i){
+	dp[i] = dp[i - 1];
+	dph[i] = dph[i - 1];
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for (int i = 1; i <= n; ++i) {
+		cin >> rb >> lb >> hb;
+		animes[i] = anime(rb, lb, hb);
+	}
+
+	memset(dp, 0, sizeof(dp)); //dp for time when anime ends
+	memset(dph, 0, sizeof(dph)); //dp for happiness level
+
+	hapls[0] = p(0, 0, 0);
+
+	for (int i = 1; i <= n; ++i) {
+#ifdef DEBUG
+		printf(" -- i=%d (anime r=%lld l=%lld h=%lld)\n", i, animes[i].r, animes[i].l, animes[i].h);
+#endif
+		ll minh = INT_MIN;
+		int mini = -1;
+
+//		for(p pp : hapls){
+//			if(animes[i].r >= pp.t){
+//				minh = pp.h;
+//				mini = pp.i;
+//				break;
+//			}
+//		}
+
+		ll itc = 0;
+
+		for(pair<ll, p> pp : hapls){
+			if(itc > 1000){
+				break;
+			}
+
+			if(animes[i].r >= pp.second.t){
+				minh = pp.second.h;
+				mini = pp.second.i;
+				break;
+			}
+			itc++;
+		}
+
+#ifdef DEBUG
+		printf("Found index %d (val t=%lld, h=%lld)\n", mini, dp[mini], minh);
+#endif
+
+		if(mini != -1){
+			//Found anime that he can watch
+			ll alt = animes[i].h + minh;
+			dph[i] = alt;
+			dp[i] = animes[i].r + animes[i].l;
+		}
+		else{
+#ifdef DEBUG
+			printf("could not find anime :(\n");
+#endif
+			//Could not find anime :((
+			settl(i);
+		}
+
+//		hapls.emplace(i, dp[i], dph[i]);
+
+		hapls[dph[i]] = min(hapls[dph[i]], p(i, dp[i], dph[i]), cmp);
+
+#ifdef DEBUG
+		printf("hapls: [");
+		for(pair<int, p> pairr : hapls){
+			printf("(%d, (i=%d t=%lld h=%lld)), ", pairr.first, pairr.second.i, pairr.second.t, pairr.second.h);
+		}
+		printf("]\n");
+#endif
+	}
+
+#ifdef DEBUG
+	printf("dp: ");
+	for (int i = 0; i < n + 1; ++i) 	{
+		printf("%lld, ", dp[i]);
+	}
+	printf("\n");
+	printf("dph: ");
+	for (int i = 0; i < n + 1; ++i) {
+		printf("%lld, ", dph[i]);
+	}
+	printf("\n");
+#endif
+
+	printf("%lld\n", *max_element(dph, dph + n + 1));
+}

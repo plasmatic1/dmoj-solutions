@@ -1,0 +1,92 @@
+//============================================================================
+// Name        : MaintainingASequence.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> seq;
+int n, m, bx, bp, bt;
+string bcmd;
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> m;
+
+	for (int i = 0; i < n; ++i) {
+		cin >> bx;
+		seq.push_back(bx);
+	}
+
+	for (int i = 0; i < m; ++i) {
+		cin >> bcmd;
+
+		if(bcmd == "INSERT"){
+			cin >> bp >> bt;
+
+			for (int j = bp; j < bp + bt; ++j) {
+				cin >> bx;
+
+				seq.insert(seq.begin() + j, bx);
+			}
+		}
+		else if(bcmd == "DELETE"){
+			cin >> bp >> bt;
+			bp--;
+
+			seq.erase(seq.begin() + bp, seq.begin() + bp + bt);
+		}
+		else if(bcmd == "MAKE-SAME"){
+			cin >> bp >> bt >> bx;
+			bp--;
+
+			for (int j = bp; j < bp + bt; ++j) {
+				seq[j] = bx;
+			}
+		}
+		else if(bcmd == "REVERSE"){
+			cin >> bp >> bt;
+			bp--;
+
+			reverse(seq.begin() + bp, seq.begin() + bp + bt);
+		}
+		else if(bcmd == "GET-SUM"){
+			cin >> bp >> bt;
+			bp--;
+
+			int cs = 0;
+
+			for (int j = bp; j < bp + bt; ++j) {
+				cs += seq[j];
+			}
+
+			printf("%d\n", cs);
+		}
+		else{ // bcmd == "MAX-SUM"
+			int maxend = 0, maxsum = INT_MIN;
+
+			for (int j = 0; j < seq.size(); ++j) {
+				maxend += seq[j];
+
+				if(maxsum < maxend){
+					maxsum = maxend;
+				}
+
+				if(maxend < 0){
+					maxend = 0;
+				}
+			}
+
+			printf("%d\n", maxsum);
+		}
+	}
+
+	return 0;
+}

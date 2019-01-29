@@ -1,0 +1,91 @@
+//============================================================================
+// Name        : FactorSolitaire.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+//#define DEBUG
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+const int MAX = 5000001, MAX_PF = 23; //8 308 608
+int n, ans = 0, dp[MAX], pfactors[MAX_PF], pfcnt = 0, f_ptr = 0;
+
+void gpfactors(int v){
+	int vs = sqrt(v);
+
+	for(; v % 2 == 0; v /= 2){
+		pfactors[pfcnt++] = 2;
+	}
+
+	for(int i = 3; i < vs; i += 2){
+		for(; v % i == 0; v /= i){
+			pfactors[pfcnt++] = i;
+		}
+	}
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	memset(dp, -1, sizeof(dp));
+	dp[n] = 0;
+
+	for (int i = 1, target = n - 1; i < n; ++i, target--) {
+		int minv = INT_MAX;
+
+		gpfactors(target);
+
+		int end = 1 << pfcnt;
+		for(int j = 0; j < end; j++){
+			int factor;
+
+			if(j == 0){
+				factor = 1;
+			}
+			else{
+				for (int k = 0; k < pfcnt; ++k) {
+					if(j & (1 << k)){
+						factor *= pfactors[i];
+					}
+				}
+			}
+		}
+
+		for (int j = target + 1, maxv = min(j * 2, n + 1); j < maxv; ++j) {
+			if(dp[j] != -1){
+				int delta = j - target, pc = target / delta;
+				if(pc * delta == target){ //is divisible
+					minv = min(minv, dp[j] + pc);
+				}
+			}
+		}
+
+		if(minv == INT_MAX){
+			continue;
+		}
+
+		dp[target] = minv;
+	}
+
+#ifdef DEBUG
+	printf("dp: ");
+	for (int i = 0; i <= n; ++i) {
+		printf("%d, ", dp[i]);
+	}
+	printf("\n");
+#endif
+
+	printf("%d\n", dp[1]);
+
+	return 0;
+}

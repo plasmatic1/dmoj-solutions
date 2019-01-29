@@ -1,0 +1,52 @@
+/*
+ * way easier than i thought lmao
+ */
+
+//============================================================================
+// Name        : Snowflakes.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h> //why nnobody say order doesnt matter you DINGUS
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+int n, bufs[6];
+unordered_set<string> flakes;
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for (int i = 0; i < n; ++i) {
+		cin >> bufs[0] >> bufs[1] >> bufs[2] >> bufs[3] >> bufs[4] >> bufs[5];
+
+		sort(bufs, bufs + 6);
+		string flake = ""; // Very flaky, do not take on date or ask out
+
+		for (int j = 0; j < 6; ++j) {
+			flake += bufs[j];
+		}
+
+		if(flakes.find(flake) != flakes.end()){
+			printf("Twin snowflakes found.\n");
+			return 0;
+		}
+
+		flakes.insert(flake);
+	}
+
+//	for(pair<string, bool> fl : flakes){
+//		printf("%s, %d\n", fl.first.c_str(), fl.second);
+//	}
+
+	printf("No two snowflakes are alike.\n");
+}

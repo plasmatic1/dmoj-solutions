@@ -1,0 +1,70 @@
+//============================================================================
+// Name        : CarConverganceChaos.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+const int MAX = 2001;
+int n, sum = 0,
+	arr[MAX];
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for (int i = 0; i < n; ++i) {
+		cin >> arr[i];
+	}
+
+	for (int i = 0; i < n; ++i) {
+		for (int j = i + 2; j < n; j += 2) {
+			int ca = arr[i], cb = arr[j], mins = 0, posa = 0, posb = 0, m = (i + j) / 2,
+					state = 1;
+
+			while(i + posa != m && j - posb != m){
+				if(mins >= ca){
+					posa++;
+					ca += arr[i + posa];
+				}
+
+				if(mins >= cb){
+					posb++;
+					cb += arr[j - posb];
+				}
+
+				int cstate = 0;
+
+				if(posa == posb){
+					cstate = state;
+				}
+				else if(posa > posb){
+					cstate = 2;
+				}
+
+//				printf("minute=%d cstate=%d state=%d\n", mins, cstate, state);
+
+				if(cstate != 1 && cstate != state){
+					sum++;
+				}
+
+				state = cstate;
+				mins++;
+			}
+
+//			printf("finished pair i=%d j=%d sum=%d\n", i, j, sum);
+		}
+	}
+
+	printf("%d\n", sum);
+}

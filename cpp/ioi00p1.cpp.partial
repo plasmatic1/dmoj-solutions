@@ -1,0 +1,46 @@
+//============================================================================
+// Name        : Palindrome.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+const int MAX = 5001;
+int n, cur = 2, bef = 1, bef2 = 0,
+	dp[3][MAX];
+string s;
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> s;
+
+	for (int i = 2; i <= n; ++i) {
+		memset(dp[cur], 0, sizeof(dp[cur]));
+
+		for (int j = 0; j < n - i + 1; ++j) {
+			if(s[j] == s[j + i - 1]){
+				dp[cur][j] = min(dp[bef2][j + 1], min(dp[bef][j + 1], dp[bef][j]));
+			}
+			else{
+				dp[cur][j] = min(dp[bef2][j + 1] + 2, min(dp[bef][j + 1] + 1, dp[bef][j] + 1));
+			}
+		}
+
+		int tmp = bef, tmp2 = bef2;
+		bef = cur;
+		bef2 = tmp;
+		cur = tmp2;
+	}
+
+	printf("%d\n", dp[bef][0]);
+}

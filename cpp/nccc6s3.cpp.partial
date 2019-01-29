@@ -1,0 +1,99 @@
+//============================================================================
+// Name        : PusheenEatsTunaSashimiAndTuna.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+struct tr{
+	int x, y, vx, vy;
+
+	tr(int x0, int y0, int vx0, int vy0) : x(x0), y(y0), vx(vx0), vy(vy0){}
+	tr() : x(-1), y(-1), vx(-1), vy(-1){}
+};
+
+const int MAX = 101, VMAX = 25, MV = (VMAX + 2) << 1, OFFS = VMAX, VMIN = -VMAX;
+
+int x, y, n, sx, sy, ex, ey, ba, bb;
+short dist[MAX][MAX][MV][MV];
+bool bad[MAX][MAX];
+deque<tr> nextt;
+tr adjs[5];
+
+inline void makeadjs(tr &cur){
+	adjs[0] = tr(cur.x + cur.vx, cur.y + cur.vy, cur.vx, cur.vy);
+	adjs[1] = tr(cur.x + cur.vx + 1, cur.y + cur.vy, cur.vx + 1, cur.vy);
+	adjs[2] = tr(cur.x + cur.vx, cur.y + cur.vy + 1, cur.vx, cur.vy + 1);
+	adjs[3] = tr(cur.x + cur.vx - 1, cur.y + cur.vy, cur.vx - 1, cur.vy);
+	adjs[4] = tr(cur.x + cur.vx, cur.y + cur.vy - 1, cur.vx, cur.vy - 1);
+}
+
+inline int access(tr &cur){
+	return dist[cur.x][cur.y][cur.vx + OFFS][cur.vy + OFFS];
+}
+
+inline void sett(tr &cur, int val){
+	dist[cur.x][cur.y][cur.vx + OFFS][cur.vy + OFFS] = val;
+}
+
+int gcd(int a, int b){
+	if(b == 0) return a;
+	return gcd(b, a % b);
+}
+
+inline bool check(tr &cur, tr &adj){
+	int dx = adj.x - cur.x, dy = adj.y - cur.y, gcdv = gcd(abs(dx), abs(dy));
+	if(gcdv == 0) return false;
+	int vx = dx / gcdv, vy = dy / gcdv;
+	for(int x = cur.x, y = cur.y; x != adj.x && y != adj.y; x += vx, y += vy){
+		if(bad[x][y]) return true;
+	}
+	return false;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> x >> y >> n >> sx >> sy >> ex >> ey;
+
+	for (int i = 0; i < n; ++i) {
+		cin >> ba >> bb;
+
+		bad[ba][bb] = true;
+	}
+
+	memset(dist, -1, sizeof dist);
+	dist[sx][sy][OFFS][OFFS] = 0;
+	nextt.emplace_back(sx, sy, 0, 0);
+
+	while(!nextt.empty()){
+		tr cur = nextt.front();
+		int dis = access(cur);
+		nextt.pop_front();
+
+		if(dis < 0) continue;
+
+//		printf("x=%d y=%d vx=%d vy=%d dis=%d\n", cur.x, cur.y, cur.vx, cur.vy, dis);
+
+		makeadjs(cur);
+		for(tr adj : adjs){
+			if(adj.x < 0 || adj.x > x || adj.y < 0 || adj.y > y || adj.vx < VMIN || adj.vx > VMAX || adj.vy < VMIN || adj.vy > VMAX
+					|| bad[adj.x][adj.y] || access(adj) != -1 || check(cur, adj))
+				continue;
+
+			sett(adj, dis + 1);
+			nextt.push_back(adj);
+		}
+	}
+
+	tr end = tr(ex, ey, 0, 0);
+	printf("%d\n", access(end));
+}
