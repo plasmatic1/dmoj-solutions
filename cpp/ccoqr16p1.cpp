@@ -11,54 +11,40 @@
 using namespace std;
 
 typedef long long ll;
-
-struct p{
-	int x, y;
-};
+typedef unordered_map<int, vector<int>> ptlist;
 
 const int MAX = 100001;
+int n,
+	x[MAX], y[MAX];
+ptlist byx, byy;
+ll tot = 0;
 
-int n, bx, by;
-ll total = 0;
-unordered_map<int, vector<int>> rows, cols;
-p pts[MAX];
-
-void sortmp(unordered_map<int, vector<int>> &mp){
-	for(auto it = mp.begin(); it != mp.end(); it++){
+void sort_all(ptlist &map){
+	for(auto it = map.begin(); it != map.end(); it++)
 		sort(it->second.begin(), it->second.end());
-	}
 }
 
 int main(){
 	ios_base::sync_with_stdio(false);
-	cin.tie(0);
+	cin.tie(NULL);
 
 	cin >> n;
 
 	for (int i = 0; i < n; ++i) {
-		cin >> bx >> by;
+		cin >> x[i] >> y[i];
 
-		rows[by].push_back(bx);
-		cols[bx].push_back(by);
-		pts[i] = {bx, by};
+		byx[x[i]].push_back(y[i]);
+		byy[y[i]].push_back(x[i]);
 	}
 
-	// Sorting
-
-	sortmp(rows);
-	sortmp(cols);
-
-	// Binary Search
+	sort_all(byx);
+	sort_all(byy);
 
 	for (int i = 0; i < n; ++i) {
-		auto ptrr = lower_bound(rows[pts[i].y].begin(), rows[pts[i].y].end(), pts[i].x),
-				ptrc = lower_bound(cols[pts[i].x].begin(), cols[pts[i].x].end(), pts[i].y);
-
-		total += (ll)(ptrr - rows[pts[i].y].begin()) * (ll)(rows[pts[i].y].end() - ptrr - 1) *
-				(ll)(ptrc - cols[pts[i].x].begin()) * (ll)(cols[pts[i].x].end() - ptrc - 1);
+		vector<int> &row = byy[y[i]], &col = byx[x[i]];
+		int rowidx = lower_bound(row.begin(), row.end(), x[i]) - row.begin(), colidx = lower_bound(col.begin(), col.end(), y[i]) - col.begin();
+		tot += (ll)rowidx * (row.size() - rowidx - 1) * colidx * (col.size() - colidx - 1);
 	}
 
-	// Output
-
-	printf("%lld\n", total * 2L);
+	printf("%lld\n", tot << 1);
 }

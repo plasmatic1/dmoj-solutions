@@ -6,132 +6,82 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
-#include <algorithm>
-#include <cstdio>
-#include <iostream>
-#include <queue>
-#include <vector>
-#include <cstring>
-
-//#define DEBUG
+#include <bits/stdc++.h>
 
 using namespace std;
 
-const int MAX = 100000;
+typedef long long ll;
+typedef pair<int, int> p;
 
-int n, m, st, edges = 0,
-		levels[MAX], levels0[MAX];
-bool pho[MAX];
-vector<int> matrix[MAX], matrix2[MAX]; //, phos;
+const int MAX = 100001;
+int n, m, ba, bb, bc,
+	levels[MAX];
+bool good[MAX];
+vector<int> matrix[MAX];
 
-bool dfs(int node, int parent){
-	bool flag = pho[node];
-	for(int adj : matrix[node]){
-		if(adj == parent){
-			continue;
-		}
-		if(dfs(adj, node)){
-			flag = true;
-		}
-	}
+bool dfs(int cur, int par){
+	bool &flag = good[cur];
 
-	// && parent != -1
-	if(flag && parent != -1){
-#ifdef DEBUG
-		printf("Adding edge %d to %d\n", parent, node);
-#endif
-
-		matrix2[node].push_back(parent);
-		matrix2[parent].push_back(node);
-		edges++;
-	}
+	for(int adj : matrix[cur])
+		if(adj ^ par)
+			flag |= dfs(adj, cur);
 
 	return flag;
 }
 
-void bfs(int levelss[], int start, int n){
-	fill(levelss, levelss + n, -1);
-	levelss[start] = 0;
-	queue<int> next;
-	next.push(start);
+void dfs2(int cur, int lvl){
+	levels[cur] = lvl;
 
-	while(!next.empty()){
-		int curr = next.front(), level = levelss[curr];
-		next.pop();
-
-		for(int adj : matrix2[curr]){
-			if(levelss[adj] != -1){
-				continue;
-			}
-
-			levelss[adj] = level + 1;
-			next.push(adj);
-		}
-	}
+	for(int adj : matrix[cur])
+		if(levels[adj] == -1 && good[adj])
+			dfs2(adj, lvl + 1);
 }
 
-int maxNode(int arr[], int n){
-	int max = 0, node = -1;
+int edgecnt(int cur, int par){
+	int cnt = 0;
+
+	for(int adj : matrix[cur])
+		if(good[adj] && (adj ^ par))
+			cnt += edgecnt(adj, cur) + 1;
+
+	return cnt;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> m;
+
+	for (int i = 0; i < m; ++i) {
+		cin >> bc;
+		good[bc] = true;
+	}
+
+	for (int i = 1; i < n; ++i) {
+		cin >> ba >> bb;
+
+		matrix[ba].push_back(bb);
+		matrix[bb].push_back(ba);
+	}
+
+	dfs(bc, -1);
+
+	memset(levels, -1, sizeof levels);
+	dfs2(bc, 0);
+
+	int besti = -1, bestv = -10;
 	for(int i = 0; i < n; i++){
-		if(arr[i] > max){
-			max = arr[i];
-			node = i;
+		if(levels[i] > bestv){
+			bestv = levels[i];
+			besti = i;
 		}
 	}
 
-	return node;
-}
+	memset(levels, -1, sizeof levels);
+	dfs2(besti, 0);
 
-int main() {
-	scanf("%d %d", &n, &m);
+	int dia = *max_element(levels, levels + n);
 
-	for(int i = 0; i < m; i++){
-		int p;
-		scanf("%d", &p);
-
-		pho[p] = true;
-		st = p;
-	}
-
-	for(int i = 0, n0 = n - 1; i < n0; i++){
-		int a, b;
-		scanf("%d %d", &a, &b);
-		matrix[a].push_back(b);
-		matrix[b].push_back(a);
-	}
-
-	dfs(st, -1);
-
-//	memset(levels, -1, sizeof(levels));
-//	memset(levels0, -1, sizeof(levels0));
-
-	bfs(levels, st, n);
-	int end = maxNode(levels, n);
-	bfs(levels0, end, n);
-
-	int dia = *max_element(levels0, levels0 + n);
-
-#ifdef DEBUG
-	cout << "st " << st << endl;
-
-	cout << "levels ";
-	for(int i = 0; i < n; i++){
-		cout << levels[i] << ", ";
-	}
-	cout << endl;
-
-	printf("levels0: ");
-	for (int i = 0; i < n; ++i) {
-		printf("%d, ", levels0[i]);
-	}
-	printf("\n");
-
-	printf("edges=%d, dia=%d\n", edges, dia);
-
-	cout << "end " << end << endl;
-#endif
-
-	cout << (2 * edges - dia) << endl;
-
-	return 0;
+	printf("%d\n", 2 * edgecnt(bc, -1) - dia);
 }

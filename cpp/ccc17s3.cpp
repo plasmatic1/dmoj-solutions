@@ -13,10 +13,8 @@ using namespace std;
 typedef long long ll;
 typedef pair<int, int> p;
 
-const int MAX = 1000000, MAXL = 2001;
-int n, buf, wood[MAXL];//, sums[MAXL * 2];
-
-unordered_map<int, int> fences;
+const int MAX = 4001, MV = 2001;
+int n, buf, board[MV], sums[MAX];
 
 int main(){
 	ios_base::sync_with_stdio(false);
@@ -24,44 +22,28 @@ int main(){
 
 	cin >> n;
 
-	int maxl = INT_MIN;
 	for (int i = 0; i < n; ++i) {
 		cin >> buf;
-		wood[buf]++;
-
-		maxl = max(maxl, buf);
+		board[buf]++;
 	}
 
-	for (int i = 1; i <= maxl; ++i) {
-		if(wood[i]){
-			for (int j = i; j <= maxl; ++j) {
-				if(i == j){
-					fences[i << 1] += wood[i] >> 1;
-				}
-				else if(wood[j]){
-					fences[i + j] += min(wood[i], wood[j]);
-				}
-			}
+	for(int i = 1; i < MV; i++)
+		sums[i << 1] += board[i] / 2;
+
+	for(int i = 1; i < MV; i++)
+		for(int j = i + 1; j < MV; j++)
+			sums[i + j] += min(board[i], board[j]);
+
+	int best = -1, bestcnt = 0;
+
+	for(int i = 1; i < MAX; i++){
+		if(sums[i] > best){
+			best = sums[i];
+			bestcnt = 1;
 		}
+		else if(sums[i] == best)
+			bestcnt++;
 	}
 
-//	for(p fence : fences){
-//		printf("height: %d -> l=%d\n", fence.first, fence.second);
-//	}
-
-	maxl = INT_MIN;
-	int total = 0;
-
-	//first = height, second = length
-	for(p fence : fences){
-		maxl = max(maxl, fence.second);
-	}
-
-	for(p fence : fences){
-		if(fence.second == maxl){
-			total++;
-		}
-	}
-
-	printf("%d %d\n", maxl, total);
+	printf("%d %d\n", best, bestcnt);
 }

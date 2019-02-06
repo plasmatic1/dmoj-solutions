@@ -10,65 +10,40 @@
 
 using namespace std;
 
-typedef long long ll;
-
-struct ln{
+struct line{
 	double m, b, x1, y1, x2, y2;
-	bool vert;
+	bool v;
 };
 
-struct p{
-	double x, y;
+const int MAX = 100;
+int n, bn, ba, bb, bc, bd,
+	tot = 0;
+line base;
+vector<line> polys[MAX];
 
-	p(double x0, double y0) : x(x0), y(y0){}
-	p() : x(-1), y(-1){}
-};
+line setline(double x1, double y1, double x2, double y2){
+	double dx = x2 - x1, dy = y2 - y1;
 
-const int MAX = 101, MV = 32;
-int n, be, total = 0;
-double ba, bb, bc, bd, minx, maxx;
-vector<ln> builds[MAX];
-ln mainln;
-p pts[32];
-
-inline void set_line(double ba, double bb, double bc, double bd, ln &line){
-	double m = (bd - bb) / (bc - ba);
-
-	if(ba == bc){
-		line = {m, ba, ba, bb, bc, bd, true};
-	}
-	else{
-		line = {m, bb - (m * ba), ba, bb, bc, bd, false};
-	}
+	if(dx == 0) // Vertical
+		return {-1, x1, x1, y1, x2, y2, true};
+	double m = dy / dx;
+	return {m, y1 - m * x1, x1, y1, x2, y2, false};
 }
 
-const double NOT_EXIST = numeric_limits<double>::max();
-inline pair<double, bool> intersection(ln a, ln b){
-	if(a.vert && b.vert){
-		if(a.x1 == b.x1){
-			double miny1 = min(a.y1, a.y2), maxy1 = max(a.y1, a.y2), miny2 = min(b.y1, b.y2), maxy2 = max(b.y1, b.y2);
-			return make_pair(a.x1, max(miny1, miny2) <= min(maxy1, maxy2));
-		}
+inline bool between(double l, double r, double x){
+	return x >= min(l, r) && x <= max(l, r);
+}
 
-		return make_pair(NOT_EXIST, false);
+inline bool intersection(line a, line b){
+	if(a.v) swap(a, b);
+	if(b.v){
+		double intery = a.m * b.b + a.b;
+		return between(a.x1, a.x2, b.b) && between(b.y1, b.y2, intery);
 	}
-
-	if(a.vert){
-		swap(a, b);
+	else{
+		double interx = -(a.b - b.b) / (a.m - b.m);
+		return between(a.x1, a.x2, interx) && between(b.x1, b.x2, interx);
 	}
-
-	if(b.vert){
-		double yfor = a.m * b.x1 + a.b;
-		return make_pair(b.x1, yfor >= min(b.y1, b.y2) && yfor <= max(b.y1, b.y2));
-	}
-
-	double nm = a.m - b.m, nb = a.b - b.b;
-
-	if(nm == 0){
-		return make_pair(NOT_EXIST, false);
-	}
-
-	return make_pair(-nb / nm, true);
 }
 
 int main(){
@@ -76,48 +51,43 @@ int main(){
 	cin.tie(NULL);
 
 	cin >> ba >> bb >> bc >> bd >> n;
+	base = setline(ba, bb, bc, bd);
 
-	set_line(ba, bb, bc, bd, mainln);
-	minx = min(ba, bc);
-	maxx = max(ba, bc);
-
-	// Making lines
 	for (int i = 0; i < n; ++i) {
-		cin >> be;
+		cin >> bn >> ba >> bb;
+		int lastx = ba, lasty = bb, firstx = ba, firsty = bb;
 
-		for (int j = 0; j < be; ++j) {
+		for (int j = 1; j < bn; ++j) {
 			cin >> ba >> bb;
-			pts[j] = p(ba, bb);
+
+			polys[i].push_back(setline(lastx, lasty, ba, bb));
+
+			lastx = ba;
+			lasty = bb;
 		}
 
-		for (int j = 0; j < be - 1; ++j) {
-			ln tmp;
-			set_line(pts[j].x, pts[j].y, pts[j + 1].x, pts[j + 1].y, tmp);
-			builds[i].push_back(tmp);
-		}
-
-		ln tmp;
-		set_line(pts[be - 1].x, pts[be - 1].y, pts[0].x, pts[0].y, tmp);
-		builds[i].push_back(tmp);
+		polys[i].push_back(setline(firstx, firsty, lastx, lasty));
 	}
 
-	// Getting intersections
 	for (int i = 0; i < n; ++i) {
-		bool pass = false;
+		bool flag = false;
 
-		for(ln line : builds[i]){
-			double bl = max(minx, min(line.x1, line.x2)), br = min(maxx, max(line.x1, line.x2));
+		for(line oth : polys[i]){
+			if(base.v && oth.v){
+				if(base.b == oth.b){
+					double ymin = min(base.y1, base.y2), ymax = max(base.y1, base.y2),
+							ymin2 = min(oth.y1, oth.y2), ymax2 = max(oth.y1, oth.y2);
 
-			pair<double, bool> intersect = intersection(mainln, line);
-			if(intersect.second && intersect.first >= bl && intersect.first <= br){
-				pass = true;
-				break;
+					if(ymax >= ymin2 || ymax2 >= ymin) flag = true;
+				}
 			}
+			else if(intersection(base, oth)) flag = true;
+
+			if(flag) break;
 		}
 
-		total += pass;
+		tot += flag;
 	}
 
-	// Output
-	printf("%d\n", total);
+	printf("%d\n", tot);
 }
