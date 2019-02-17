@@ -1,0 +1,52 @@
+//============================================================================
+// Name        : test.cpp
+// Author      : Daxi the Taxi
+// Version     :
+// Copyright   : ALL YOUR CODE IS BELONG TO US
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> p;
+
+const int MAX = 1000001;
+int n, k, buf,
+	arr[MAX], conv[MAX], dp[MAX], tree[MAX];
+
+void update(int x, int v){
+	for(; x <= n; x += x & -x)
+		tree[x] = max(tree[x], v);
+}
+
+int maxv(int x){
+	int maxv = 0;
+	for(; x; x -= x & -x)
+		maxv = max(maxv, tree[x]);
+	return maxv;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n;
+
+	for(int i = 0; i < n; i++){
+		cin >> arr[i];
+		conv[i] = arr[i];
+	}
+
+	sort(conv, conv + n);
+
+	for (int i = 0; i < n; ++i){
+		arr[i] = lower_bound(conv, conv + n, arr[i]) - conv + 1;
+		dp[i] = maxv(arr[i] - 1) + 1;
+		update(arr[i], dp[i]);
+	}
+
+	printf("%d\n", *max_element(dp, dp + n));
+}
