@@ -23,4 +23,5 @@ for subid, sub in getjson(URL).items():
 notin = sorted(set(notin))
 for code in notin:
     print('"%s" not in repo!' % code)
-            
+
+input('Press ENTER to continue...')
