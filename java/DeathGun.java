@@ -1,86 +1,50 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.stream.Collectors;
+import java.util.Scanner;
 
-public class DeathGun {
-	static HashMap<String, List<String>> relations = new HashMap<String, List<String>>();
-	static HashSet<String> uniques = new HashSet<String>();
-	
-	public static void main(String[] args) throws NumberFormatException, IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		
-		int N = Integer.parseInt(br.readLine());
-		
-		for(int i = 0; i < N; i++){
-			StringTokenizer token = new StringTokenizer(br.readLine());
-			String b = token.nextToken(), a = token.nextToken();
-			
-			uniques.add(a);
-			uniques.add(b);
-			addRelation(a, b);
-		}
-		
-		ArrayList<String> order = new ArrayList<String>();
-		HashMap<String, Integer> inDegreeMap = new HashMap<String, Integer>();
-		LinkedList<String> next = new LinkedList<String>();
-		
-		for(String s : uniques)
-			inDegreeMap.put(s, 0);
-		
-		for(List<String> ends : relations.values()){
-			for(String end : ends){
-				inDegreeMap.put(end, inDegreeMap.get(end) + 1);
+public class DeathGunn {
+
+	@SuppressWarnings({ "unchecked", "resource" })
+	public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
+		int M = sc.nextInt(), tot = 0;
+		String[] name = new String[M + 1];
+		HashMap<String, Integer> mp = new HashMap<String, Integer>();
+		ArrayList<Integer>[] adj = new ArrayList[901];
+		for(int i = 0; i <= 900; i++)
+			adj[i] = new ArrayList<Integer>();
+		int[] indeg = new int[901];
+		for(int i = 0; i < M; i++){
+			String x = sc.next(), y = sc.next();
+			if(!mp.containsKey(x)){
+				name[tot] = x;
+				mp.put(x, tot);
+				tot++;
 			}
+			if(!mp.containsKey(y)){
+				name[tot] = y;
+				mp.put(y, tot);
+				tot++;
+			}
+			adj[mp.get(y)].add(mp.get(x));
+			indeg[mp.get(x)]++;
 		}
-		
-		inDegreeMap.entrySet().stream().filter(entry -> entry.getValue() == 0).forEach(entry -> {
-			next.add(entry.getKey());
-		});
-		
-//		System.out.println(inDegreeMap);
-		
-		while(!next.isEmpty()){
-			String curr = next.poll();
-			order.add(curr);
-			
-//			System.out.println("At " + curr);
-			
-			if(!relations.containsKey(curr))
-				continue;
-			
-			for(String adj : relations.get(curr)){
-//				System.out.println("Adj " + adj);
-				int num = inDegreeMap.get(adj) - 1;
-				
-				if(num == 0){
-					next.addFirst(adj);
+		while(true){
+			boolean flag = true;
+			for(int i = 0; i < tot; i++){
+				if(indeg[i] == 0){
+					indeg[i]--;
+					flag = false;
+					System.out.println(name[i]);
+					
+					for(int v : adj[i])
+						indeg[v]--;
+					break;
 				}
-				
-				inDegreeMap.put(adj, num);
 			}
-			
-//			System.out.println("End iteration " + next);
-		}
-		
-//		System.out.println(inDegreeMap);
-		
-		System.out.println(order.stream().collect(Collectors.joining("\n")));
-	}
-	
-	static void addRelation(String a, String b){
-		if(relations.containsKey(a))
-			relations.get(a).add(b);
-		else{
-			ArrayList<String> list = new ArrayList<String>();
-			list.add(b);
-			relations.put(a, list);
+			if(flag)
+				break;
 		}
 	}
+
 }
