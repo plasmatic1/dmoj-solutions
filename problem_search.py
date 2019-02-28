@@ -45,6 +45,12 @@ def loadsolutions(dirname, lang):
         dic[spl[0]].append(Solution(dirname + '/' + fn, lang, spl[2:]))
     return dic
 
+# Merging two defaultdict(list)s together
+def merge(mergeto, mergefrom):
+    for k, v in mergefrom.items():
+        for item in v:
+            mergeto[k].append(item)
+
 # Initialization
 print('Loading problem data...')
 problems = loadproblems()
@@ -52,8 +58,8 @@ print('Loaded %d problems!' % len(problems))
 
 print('Loading solution data...')
 solutions = loadsolutions('cpp', 'C++')
-solutions.update(loadsolutions('java', 'Java'))
-solutions.update(loadsolutions('py', 'Python'))
+merge(solutions, loadsolutions('java', 'Java'))
+merge(solutions, loadsolutions('py', 'Python'))
 print('Loaded %d solutions!' % len(solutions))
 print()
 pause()
@@ -87,7 +93,7 @@ while True:
     print('Found %d solution(s) and %d total problem(s): ' % (resultcnt, problemcnt))
     print()
 
-    results.sort()
+    results.sort(key=lambda x: x[0])
     for i in range(resultcnt):
         name, solution = results[i]
         print('(%d): %s in %s, Tags: %s' % (i, name, solution.lang, ', '.join(solution.tags)))
