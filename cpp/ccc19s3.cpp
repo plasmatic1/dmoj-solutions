@@ -13,8 +13,9 @@ using namespace std;
 typedef long long ll;
 typedef pair<int, int> p;
 
-const int INV = 0x3f3f3f3f;
-int totunset = 0, grid[3][3];
+const int INV = 0x3f3f3f3f, FILL_ORDER[9][2] = {{1, 1}, {0, 1}, {1, 2}, {2, 1}, {1, 0}, {0, 0}, {0, 2}, {2, 2}, {2, 0}};
+int totunset = 0, fillptr = 0,
+		grid[3][3];
 string buf;
 
 inline void fix(int &a, int &b, int &c){
@@ -163,35 +164,14 @@ int main(){
 		for(int i = 0; i < 10; i++) fixGrid();
 
 		// Search for best possible square to fill in
-		vector<p> unset;
-		int best = 0, bestr = -1, bestc = -1;
-		for (int i = 0; i < 3; ++i) {
-			for (int j = 0; j < 3; ++j) {
-				if(filledSquare(i, j)) continue;
-				int ctot = filledSquare(i - 1, j) + filledSquare(i + 1, j) + filledSquare(i, j + 1) + filledSquare(i, j - 1);
-
-				if(ctot > best){
-					best = ctot;
-					bestr = i;
-					bestc = j;
-				}
-
-				addundo(unset, i, j);
-			}
+		while(!isValidGrid()){
+			assert(fillptr < 9);
+			const int* nextf = FILL_ORDER[fillptr++];
+			while(filledSquare(nextf[0], nextf[1])) nextf = FILL_ORDER[fillptr++];
+			grid[nextf[0]][nextf[1]] = 0;
+			for(int i = 0; i < 10; i++) fixGrid();
 		}
 
-		// Attempt all possible
-		for(int i = 0; i <= 2000000; i++){
-			grid[bestr][bestc] = i;
-
-			for(int j = 0; j < 3; j++) fixGrid();
-
-			if(isValidGrid()){
-				printGrid();
-				return 0;
-			}
-
-			undo(unset);
-		}
+		printGrid();
 	}
 }
