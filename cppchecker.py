@@ -10,8 +10,9 @@ def getjson(url):
         data = json.loads(req.read())
     return data
 
-subs = set(map(lambda url: url.split('.')[0], filter(
-    lambda url: url.split('.')[1] == 'cpp', os.listdir('./cpp/'))))
+subs = set(map(lambda splPath: splPath[0], filter(
+    lambda splPath: splPath[1] == 'cpp' and len(splPath) == 2, map(
+        lambda rawPath: rawPath.split('.'), os.listdir('./cpp/')))))
 notin = []
 
 for subid, sub in getjson(URL).items():
