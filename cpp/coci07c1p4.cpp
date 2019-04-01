@@ -21,7 +21,7 @@ bool over = false,
 		sett[MAX][MAX];
 string s;
 
-inline int amt(char a, char b){
+inline ll amt(char a, char b){
 	switch(a){
 	case '(': return (b == ')' || b == '?');
 	case '[': return (b == ']' || b == '?');
@@ -32,18 +32,20 @@ inline int amt(char a, char b){
 }
 
 ll rec(int l, int r){
-	if(l >= r) return 1;
+	if(l == r) return 0;
+	if(l > r) return 1;
 	if(sett[l][r]) return dp[l][r];
 
 	ll tot = 0;
 	for(int i = l + 1; i <= r; i += 2){
 		tot += (amt(s[l], s[i]) * rec(l + 1, i - 1) * rec(i + 1, r));
+		
+		if(l == 0 && r == n - 1 && tot >= MOD) over = true;
+		tot %= MOD;
 	}
 
-	if(tot > MOD) over = true;
-
 	sett[l][r] = true;
-	return dp[l][r] = tot % MOD;
+	return dp[l][r] = tot;
 }
 
 int main(){
