@@ -1,0 +1,1 @@
+[print(next(x) - next(x)) for x in [map(int, input().split(' ')) for _ in range(int(input()))]]
