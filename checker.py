@@ -21,6 +21,9 @@ notin = []
 
 for subid, sub in getjson(URL).items():
     if sub['result'] == 'AC':
+        if sub['points'] != int(sub['points']) and sub['points'] != 0:
+            continue
+        
         code = sub['problem']
         
         if sub['language'][:3] == 'CPP':
