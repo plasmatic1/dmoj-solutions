@@ -19,20 +19,22 @@ subs = getsources('cpp', 'cpp')
 pysubs = getsources('py', 'py')
 notin = []
 
+BANNED_CODES = ['phantomc1', 'acc4p4', 'cpc19c1p4']
+
 for subid, sub in getjson(URL).items():
     if sub['result'] == 'AC':
         if sub['points'] != int(sub['points']) and sub['points'] != 0:
             continue
         
         code = sub['problem']
+
+        if code in BANNED_CODES:
+            continue
         
         if sub['language'][:3] == 'CPP':
             if code not in subs:
                 notin.append('CPP - ' + code)
         elif sub['language'][:2] == 'PY':
-            if code == 'phantomc1': # Phantom's python challenge
-                continue
-            
             if code not in pysubs:
                 notin.append('PY - ' + code)
 
