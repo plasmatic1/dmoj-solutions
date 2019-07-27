@@ -22,8 +22,8 @@ void debug_(){cout<<endl;}
 template<typename F, typename... R> void debug_(F f,R... r){while(dnms_[di_] != ',')cout<<dnms_[di_++];di_++;cout<<": "<<f<<",";debug_(r...);}
 #define debug(...) dnms_=#__VA_ARGS__+co_,di_=0,debug_(__VA_ARGS__)
 
-struct suffix {
-    int idx, fst, snd;
+struct suffix { 
+    int idx, fst, snd; 
     bool operator<(const suffix &o) const { return fst == o.fst ? snd < o.snd : fst < o.fst; }
 };
 template <size_t MAX, char A = 'a'>
@@ -40,59 +40,37 @@ struct SuffixArray {
                 sfx[j] = {j, rnk[i - 1][j], j + jmp < n ? rnk[i - 1][j + jmp] : -1};
             sort(sfx, sfx + n);
             for (int j = 0; j < n; j++)
-                rnk[i][sfx[j].idx] = (j > 0 && sfx[j].fst == sfx[j - 1].fst && sfx[j].snd == sfx[j - 1].snd ? rnk[i][sfx[j - 1].idx] : j); 
+                rnk[i][sfx[j].idx] = (j > 0 && sfx[j].fst == sfx[j - 1].fst && sfx[j].snd == sfx[j - 1].snd ? rnk[i][sfx[j - 1].idx] : j);
         }
     }
     inline int get(int id) { return sfx[id].idx; }
     inline char ch(int id, int chId) { return s[sfx[id].idx + chId]; }
-    void print() { for (int i = 0; i < n; i++) cout << i << ": " << s.substr(get(i)) << "\n"; }
-    int bsearch(int l, int r, int chId, char find) { // l, r, and chId are 1-indexed.  Acts like C++ lower_bound
-        l--; l--; chId--;
-        while (l + 1 < r) {
-            int mid = (l + r) >> 1;
-            if (ch(mid, chId) >= find) r = mid; else l = mid;
-        } return r + 1;
-    }
 };
 
-const int MN = 2e5 + 1;
-int n, 
-    idxOf[MN], matchAmt[MN], totOf[MN], ls[MN], rs[MN];
+const int MN = 1e6 + 1;
+int n, k;
 string s;
-SuffixArray<MN> sfx(n, s);
-bool work[MN];
+SuffixArray<MN, 'a'> sfx(n, s);
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(n, s);
+    scan(s, k);
+    n = s.length();
     sfx.init();
 
-    // sfx.print();
-    
-    for (int i = 0; i < n; i++)
-        idxOf[n - sfx.sfx[i].idx] = i + 1;   
+    // for (int i = 0; i < n; i++) {
+    //     auto ss = s.substr(sfx.get(i)); debug(i, ss, n - sfx.get(i));
+    // }
 
-    ls[0] = 1; rs[0] = n;
-    for (int i = 1; i <= n; i++) {
-        int newL = sfx.bsearch(ls[i - 1], rs[i - 1], i, s[i - 1]),
-            newR = sfx.bsearch(ls[i - 1], rs[i - 1], i, s[i - 1] + 1) - 1;
-        ls[i] = newL;
-        rs[i] = newR;
-
-        // debug(i, newL, newR);
-
-        totOf[i] = rs[i] - ls[i] + 1;
+    for (int i = 0; i < n; i++) {
+        int idx = sfx.get(i);
+        if (n - idx >= k) {
+            cout << s.substr(idx, k) << "\n";
+            return 0;
+        }
     }
-
-    ll tot = 0;
-    for (int i = 1; i <= n; i++) {
-        if (ls[i] <= idxOf[i] && idxOf[i] <= rs[i])
-            tot += totOf[i]; // debug(i, ls[i], idxOf[i], rs[i]);
-    }
-
-    cout << tot << "\n";
 
     return 0;
 }
