@@ -1,0 +1,1 @@
+(lambda nums: (print('x'.join(map(str, nums))), print(__import__('functools').reduce(lambda x, y: x * y, nums))))(sorted(map(int, input().split('x'))))

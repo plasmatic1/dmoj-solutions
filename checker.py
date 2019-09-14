@@ -19,7 +19,7 @@ subs = getsources('cpp', 'cpp')
 pysubs = getsources('py', 'py')
 notin = []
 
-BANNED_CODES = ['phantomc1', 'acc4p4', 'cpc19c1p4', 'coi06p2']
+BANNED_CODES = ['phantomc1', 'acc4p4', 'cpc19c1p4', 'bts19p3']
 
 for subid, sub in getjson(URL).items():
     if sub['result'] == 'AC':
