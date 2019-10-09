@@ -36,76 +36,54 @@ template<typename F, typename... R>
 void debug_(F f,R... r){int bc=0;while (bc != 0 || dnms_[di_] != ','){if (dnms_[di_] == '(') {bc++;}else if (dnms_[di_] == ')') {bc--;}cout << dnms_[di_++];}di_++;cout << ": " << f << ",";debug_(r...);}
 #define debug(...) do{dnms_=#__VA_ARGS__+co_,di_=0,debug_(__VA_ARGS__);}while(0)
 
-const int MN = 1e4 + 5;
-int n,
-    val[MN];
-queue<int> v0, v1, v2;
-
-int popf(queue<int> &q) {
-    int ret = q.front();
-    q.pop();
-    return val[ret];
-}
+const int MN = 1e6 + 1, MS = 10 + 1;
+const double DINF = numeric_limits<double>::infinity();
+string s;
+int facts[MS];
+double digc[MN];
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(n);
+    facts[0] = 1;
+    for (int i = 1; i < MS; i++)
+        facts[i] = facts[i - 1] * i;
+    
+    double clog = 0;
+    for (int i = 1; i < MN; i++) {
+        clog += log10(i);
+        digc[i] = clog;
+        // debug(i, clog);     
+    }
 
-    for (int i = 0; i < n; i++) {
-        scan(val[i]);
+    scan(s);
+    int l = s.length();
 
-        switch(val[i] % 3) {
-        case 0:
-            v0.push(i);
-            break;
-        case 1:
-            v1.push(i);
-            break;
-        default:
-            v2.push(i);
-            break;
+    if (l <= 7) {
+        int v = stoi(s);
+        for (int i = 1; i < MS; i++) {
+            if (v == facts[i]) {
+                println(i);
+                return 0;
+            }
         }
     }
-
-    if (!v0.size()) {
-        if (v1.size() && v2.size()) {
-            print("impossible\n");
-        }
-        else {
-            while (!v1.empty())
-                print(popf(v1), ' ');
-            while (!v2.empty())
-                print(popf(v2), ' ');
-            print('\n');
+    else {
+        double best = DINF;
+        int besti = -1;
+        for (int i = 1; i < MN; i++) {
+            double d = abs(digc[i] - l);
+            if (d < best) {
+                best = d;
+                besti = i;
+            }
         }
 
-        return 0;
+        print(besti);
     }
 
-    if (v1.size() + v2.size() + 1 < v0.size()) {
-        print("impossible\n");
-        return 0;
-    }
-
-    int div = popf(v0);
-
-    while (!v1.empty()) {
-        if (!v0.empty())
-            print(popf(v0), ' ');
-        print(popf(v1), ' ');
-    }
-
-    print(div, ' ');
-
-    while (!v2.empty()) {
-        print(popf(v2), ' ');
-        if (!v0.empty())
-            print(popf(v0), ' ');
-    }
-
-    print('\n');
+    // debug(l, digc[21]);
 
     return 0;
 }
