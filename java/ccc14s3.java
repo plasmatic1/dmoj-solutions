@@ -22,7 +22,8 @@ public class GenevaConfection {
 				if(list.empty())
 					x = -1;
 				else
-					x = list.pop();	
+					x = list.pop();
+					
 				
 				while((!middle.isEmpty()) && (middle.peek() == current)){
 					//System.out.printf("Sending middle to end (Middle %d | Curr %d)\n", middle.peek(), current);

@@ -115,5 +115,3 @@ class Pair{
 		return "(" + x + ", " + y + ")";
 	}
 }
-
-

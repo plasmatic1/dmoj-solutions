@@ -87,6 +87,6 @@ for i in range(1, m + 1):
         cnt += 1
 
 if cnt == n - 1:
-    print('\n'.join(map(str, edges)))
+    print '\n'.join(map(str, edges))
 else:
-    print('Disconnected Graph')
+    print 'Disconnected Graph'

@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.StringTokenizer;
 
-public class GiantAnts {
+public class GiantAnts {// Submitted legit this time, plz no ban :(
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));

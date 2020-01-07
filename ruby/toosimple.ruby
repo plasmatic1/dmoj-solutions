@@ -1,0 +1,1 @@
+puts %Q{Hello, World!}

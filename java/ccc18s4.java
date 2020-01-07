@@ -34,11 +34,6 @@ public class PerfectTrees {
 			return dp.get(n);
 		}
 		
-//		long val = dp((int) (n / 2));
-//		for(long i = 3; i <= n; i++){
-//			val += dp((int) (n / i));
-//		}
-		
 		long val = 0, k = n, next = 0;
 		
 	    while(k >= 2){

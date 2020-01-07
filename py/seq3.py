@@ -1,0 +1,1 @@
+(lambda a,b:print(*([0]*(int(a)-1)+[b])))(*input().split())

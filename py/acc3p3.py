@@ -1,5 +1,7 @@
 import sys
 from bisect import bisect
+#from itertools import permutations
+#from math import *
 input = sys.stdin.readline
 
 def gets(): return input().strip()
@@ -13,6 +15,8 @@ strs = []
 for i in range(n):
     strs.append(gets())
 
+# Attempting algo in O(nlogn)
+
 a = ord('a')
 lets = [inf] * 26
 
@@ -23,6 +27,8 @@ for s in strs:
 
     for i in range(26):
         lets[i] = min(lets[i], clets[i])
+
+# Algo
 
 currs = [-1] * n
 allindices = []
@@ -40,6 +46,8 @@ for i in range(25, -1, -1):
     if lets[i] == 0:
         continue
 
+    #print(' -- letter "%s"'%chr(i+a))
+
     best = inf
 
     for j in range(n):
@@ -50,10 +58,13 @@ for i in range(25, -1, -1):
 
     lets[i] = best
 
+    #print('best of %d'%best)
+
     if best > 0:
         for j in range(n):
             indices = allindices[j]
             currs[j] = indices[i][bisect(indices[i], currs[j]) + best - 1]
+            #print('for j=%d set curr to %d'%(j,currs[j]))
 
 final = ''
 for i in range(25, -1, -1):
