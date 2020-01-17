@@ -5,7 +5,7 @@ require 'json'
 ### Constants
 
 # Problem codes to ignore
-IGNORE = Set.new ['phantomc1', 'joi14p6', 'acc4p4']
+IGNORE = Set.new ['phantomc1', 'joi14p6', 'acc4p4', 'bbc08d']
 
 # Whether debug mode is on (program will retrieve submission data from local file and session id is a set variable)
 DEBUG = false 
