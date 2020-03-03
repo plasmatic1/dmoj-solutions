@@ -1,0 +1,261 @@
+#pragma region
+#include <bits/stdc++.h>
+using namespace std;
+// Common Type shorteners and int128
+using ll = long long; using ull = unsigned long long; using ld = long double;
+using pii = pair<int, int>; using pll = pair<ll, ll>;
+template <typename T> using vec = vector<T>;
+template <typename K, typename V> using umap = unordered_map<K, V>; template <typename K> using uset = unordered_set<K>;
+using vi = vec<int>; using vl = vec<ll>; using vpi = vec<pii>; using vpl = vec<pll>;
+#ifdef __SIZEOF_INT128__
+using int128 = __int128_t; using uint128 = __uint128_t;
+#endif
+template<typename I> string intStr(I x) { string ret; while (x > 0) { ret += (x % 10) + '0'; x /= 10; } reverse(ret.begin(), ret.end()); return ret; } // Int to string
+// Shorthand Macros
+#define INF 0x3f3f3f3f
+#define LLINF 0x3f3f3f3f3f3f3f3f
+#define mpr make_pair
+#define mtup make_tuple
+#define pb push_back
+#define popcount __builtin_popcount
+#define clz __builtin_clz
+#define ctz __builtin_ctz
+#define finline __attribute__((always_inline))
+// Shorthand Function Macros
+#define sz(x) ((int)((x).size()))
+#define all(x) (x).begin(), (x).end()
+#define rep(i, a, b) for (__typeof(a) i = a; i < b; i++)
+#define reprev(i, a, b) for (__typeof(a) i = a; i > b; i--)
+#define repi(a, b) rep(i, a, b)
+#define repj(a, b) rep(j, a, b)
+#define repk(a, b) rep(k, a, b)
+#define Cmplt(type) bool operator<(const type &o) const
+#define Cmpgt(type) bool operator>(const type &o) const
+#define Cmpfn(name, type) bool name(const type &a, const type &b)
+#define Inop(type) istream& operator>>(istream& in, type &o)
+#define Outop(type) ostream& operator<<(ostream& out, type o)
+#define Pow2(x) (1LL << (x))
+#define scn(type, ...) type __VA_ARGS__; scan(__VA_ARGS__) // scn -> Short for SCan New
+// Shorthand Functions
+template<typename T> inline void maxa(T& st, T v) { st = max(st, v); }
+template<typename T> inline void mina(T& st, T v) { st = min(st, v); }
+inline void setprec(ostream& out, int prec) { out << setprecision(prec) << fixed; }
+// Out operators and printing for arrays and vectors
+template <typename T> ostream& operator<<(ostream& out,vector<T> iter){out<<"[";for(auto t:iter){out<<t<<", ";}out<<"]";return out;}
+template <typename T> string arrayStr(T *arr,int sz){string ret = "[";for(int i=0;i<sz;i++){ret+=to_string(arr[i])+", "; } return ret + "]";}
+template <typename T> void printArray(T *arr,int sz){for(int i=0;i<sz;i++){cout<<arr[i]<<" "; } cout<<"\n";}
+// I/O Operations
+inline void scan(){}
+template<typename F, typename... R> inline void scan(F &f,R&... r){cin>>f;scan(r...);}
+template <typename F> inline void println(F t){cout<<t<<'\n';}
+template<typename F, typename... R> inline void println(F f,R... r){cout<<f<<" ";println(r...);}
+inline void print(){}
+template<typename F, typename... R> inline void print(F f,R... r){cout<<f;print(r...);}
+// Debugging
+#define db(x) cout << (#x) << ": " << (x) << ", "
+#define dblb(s) cout << "[" << (s) << "] "
+#define dba(alias, x) cout << (alias) << ": " << (x) << ", "
+template<typename F> inline string __generic_tostring(F f) { stringstream ss; ss << f; return ss.str(); }
+template<typename F> inline string __join_comma(F f) {return __generic_tostring(f);}
+template<typename F, typename... R> string __join_comma(F f, R... r) { return __generic_tostring(f) + ", " + __join_comma(r...); }
+#define dbp(alias, ...) cout << (alias) << ": (" << __join_comma(__VA_ARGS__) << "), "
+#define dbbin(x, n) cout << (#x) << ": " << bitset<n>(x) << ", "
+#define dbarr(x, n) cout << (#x) << ": " << arrayStr((x), (n)) << ", "
+#define dbln cout << endl;
+#pragma endregion
+
+struct Mirror {
+	ll x, y, A, B;
+	void impact(ll &v, ll &w) {
+		ll nv = A * v + B * w;
+		w = B * v - A * w;
+		v = nv;
+	}
+};
+
+Inop(Mirror) {
+	in >> o.x >> o.y >> o.A >> o.B;
+	return in;
+}
+
+const int MN = 1e5 + 1, MX = 1e6 + 1, TRIALS = 100;
+// const int MN = 1e5 + 1, MX = 10, TRIALS = 10;
+int n, threshold;
+Mirror mirror[MN];
+
+// points and stuff
+vec<pll> pts[MX];
+
+ll gcd(ll a, ll b) { return b ? gcd(b, a % b) : a; }
+void fix(ll &x, ll &y) {
+	ll gcdv = abs(gcd(x, y));
+	x /= gcdv; y /= gcdv;
+}
+
+// searching stuffs
+ll x, y, v, w;
+map<pll, int> dis;
+// vec<int> paths[MN];
+struct {
+	bool A[MN]; int qid[MN], cqid = -1;
+	inline void reset() { cqid++; }
+	inline bool& operator[](int idx) {
+		if (qid[idx] != cqid) A[idx] = false, qid[idx] = cqid;
+		return A[idx];
+	}
+} vis;
+
+void distinct(vector<int> v) {
+	int sz = v.size();
+	auto ov = v;
+	sort(all(v));
+	v.resize((int)(unique(all(v)) - v.begin()));
+	if (sz != (int)v.size()) {
+		db(sz); db(v.size()); db(ov); db(v); dbln;
+		assert(0);
+	}
+}
+
+inline int findAdj(ll x, ll y, ll v, ll w) {
+	x += v; y += w;
+	for (ll ck = 1; 0 < x && x < MX && 0 < y && y < MX; ck++, x += v, y += w){
+		auto ptr = lower_bound(all(pts[x]), pll{y, -1});
+		// dblb("find up"); db(ck); db(x); db(y); dbln;
+		if (ptr != pts[x].end() && ptr->first == y) return ptr->second;
+	}
+	return -1;
+}
+
+inline void apply(int mirrorIdx, ll &x, ll &y, ll &v, ll &w, vec<int> &path) {
+	auto &mi = mirror[mirrorIdx];
+	vis[mirrorIdx] = true;
+	path.pb(mirrorIdx);
+	mi.impact(v, w); fix(v, w);
+	x = mi.x; y = mi.y;
+}
+
+inline void setXY(int idx, ll &x, ll &y) {
+	x = mirror[idx].x; y = mirror[idx].y;
+}
+
+inline void setDir(int from, int to, ll &v, ll &w) {
+	Mirror &m1 = mirror[from], &m2 = mirror[to];
+	v = m2.x - m1.x; w = m2.y - m1.y;
+	fix(v, w);
+}
+
+inline int findOpposite(int idx, ll v, ll w) {
+	v *= -1; w *= -1;
+	mirror[idx].impact(v, w);
+	fix(v, w);
+	auto ptr = dis.find(mpr(v, w));
+	return ptr == dis.end() && ptr->second != idx ? -1 : ptr->second;
+}
+
+inline bool tryPath(vi &path) {
+	int sz = path.size();
+	if (sz >= threshold) {
+		distinct(path);
+		repi(0, threshold - 1)
+			print(path[i] + 1, ' ');
+		println(path[threshold - 1] + 1);
+		return true;
+	}
+	return false;
+}
+
+bool run(int start) {
+	// reset
+	dis.clear();
+
+	// set direction
+	repi(0, n) {
+		if (i == start) continue;
+		setDir(start, i, v, w);
+		dis[mpr(v, w)] = i;
+	}
+
+	// algo
+	repi(0, n) {
+		if (i == start) continue;
+
+		// setup initial velocities and shit
+		setXY(start, x, y); setDir(start, i, v, w);
+		vis.reset();
+		vis[start] = true;
+
+		// dfs 1
+		vi patha;
+		int foundIdx = -1;
+		do {
+			if (abs(v) >= MX || abs(w) >= MX) break;
+			foundIdx = findAdj(x, y, v, w);
+			if (foundIdx != -1) {
+				if (vis[foundIdx]) break; // uh oh stinky!
+				apply(foundIdx, x, y, v, w, patha);
+			}
+		} while (foundIdx != -1);
+
+		// dfs 2 (try)
+		setDir(start, i, v, w); fix(v, w);
+		int oth = findOpposite(start, v, w);
+		if (oth != -1) {
+			setXY(start, x, y); setDir(start, oth, v, w);
+			vi pathb;
+			int foundIdx = -1;
+			do {
+				if (abs(v) >= MX || abs(w) >= MX) break;
+				foundIdx = findAdj(x, y, v, w);
+				if (foundIdx != -1) {
+					if (vis[foundIdx]) break;
+					apply(foundIdx, x, y, v, w, pathb);
+				}
+			} while (foundIdx != -1);
+
+			// push path
+			reverse(all(patha));
+			patha.pb(start);
+			for (auto x : pathb) patha.pb(x);
+			if (tryPath(patha)) return true;
+		}
+		else {
+			patha.insert(patha.begin(), start);
+			if (tryPath(patha)) return true;
+		}
+	}
+
+	return false;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	scan(n);
+	threshold = (n * 3 + 4 - 1) / 4; // ceil(3N/4)
+	repi(0, n)
+		scan(mirror[i]);
+	
+	// precalcs
+	repi(0, n) {
+		auto m = mirror[i];
+		pts[m.x].emplace_back(m.y, i);
+	}
+	repi(1, MX)
+		sort(all(pts[i]));
+	
+	// trials
+	mt19937 mt(time(NULL));
+	uniform_int_distribution<int> dis(0, n - 1);
+	repi(0, TRIALS) {
+		int start = dis(mt);
+		if (run(start)) return 0;
+	}
+
+	// debug
+	// run(0);
+
+	println(-1);
+
+	return 0;
+}

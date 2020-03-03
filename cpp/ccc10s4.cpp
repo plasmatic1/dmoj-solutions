@@ -1,3 +1,5 @@
+// thanks dan!
+
 #pragma region
 #include <bits/stdc++.h>
 using namespace std;
@@ -64,80 +66,91 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
-    }
+struct Ed {
+    int a, b, w;
+    Cmplt(Ed) { return w < o.w; }
 };
 
-int N;
-string s;
-Hash h;
+const int MN = 101, MM = 11, MX = 1001;
+int N,
+    n[MN], id[MN][MM], weight[MN][MM];
+vec<Ed> edges;
 
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
+// disjoint set union
+int dsu[MN];
+void init() { iota(dsu, dsu + MN, 0); }
+int rt(int x) { return x == dsu[x] ? x : dsu[x] = rt(dsu[x]); }
+void unite(int x, int y) { dsu[rt(x)] = rt(y); }
 
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
-}
+// cnt stuff
+int cnt[MX][MX];
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
-
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    scan(N);
+    repi(0, N) {
+        scan(n[i]);
+        repj(0, n[i])
+            scan(id[i][j]);
+        repj(0, n[i])
+            scan(weight[i][j]);
     }
-    println(l);
+
+    // build graph
+    repi(0, N) {
+        repj(i + 1, N) {
+            repk(0, n[i]) {
+                rep(l, 0, n[j]) {
+                    int start1 = id[i][k], start2 = id[j][l], end1 = id[i][(k + 1) % n[i]], end2 = id[j][(l + 1) % n[j]];
+                    if ((start1 == start2 && end1 == end2) || (start1 == end2 && start2 == end1)) {
+                        edges.pb({i, j, weight[i][k]});
+                    }
+                }
+            }
+        }
+
+        // update cnt
+        repk(0, n[i]) {
+            cnt[id[i][k]][id[i][(k + 1) % n[i]]]++;
+            cnt[id[i][(k + 1) % n[i]]][id[i][k]]++;
+        }
+    }
+
+    // check components
+    init();
+    for (auto e : edges)
+        unite(e.a, e.b);
+    uset<int> cc;
+    repi(0, N)
+        cc.insert(rt(i));
+    
+    // db(cc.size()); dbln;
+    if (int(cc.size()) > 1) { // more than one component
+        repi(0, N) {
+            repj(0, n[i]) {
+                int st = id[i][j], en = id[i][(j + 1) % n[i]];
+                // db(i); db(j); db(st); db(en); db(cnt[st][en]); dbln;
+                if (cnt[st][en] == 1)
+                    edges.pb({i, N, weight[i][j]});
+            }
+        }
+    }
+
+    // mst
+    sort(all(edges));
+    init();
+    int tot = 0;
+    for (auto e : edges) {
+        // dbp("edge", e.a, e.b, e.w); dbln;
+        // db(rt(e.a)); db(rt(e.b)); dbln;
+        if (rt(e.a) != rt(e.b)) {
+            tot += e.w;
+            unite(e.a, e.b);
+        }
+    }
+    println(tot);
 
     return 0;
 }

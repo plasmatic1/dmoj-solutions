@@ -64,80 +64,45 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
-    }
-};
+const int MN = 1010;
+int N, T, mid;
+bool cell[MN][MN];
 
-int N;
-string s;
-Hash h;
-
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
-
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
+int dist(int x, int y) {
+    return abs(x - mid) + abs(y - mid);
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
+    scan(T, N);
+    mid = N;
+    N = 2 * N + 1;
 
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    bool noBlack = true;
+    repi(0, N) {
+        char c[MN];
+        scan(c);
+        repj(0, N) {
+            cell[i][j] = c[j] == 'B';
+            noBlack &= !cell[i][j];
+        }
     }
-    println(l);
+
+    // you can't have a blank grid after 0 seconds
+    if (!T && noBlack) {
+        println("NO");
+        return 0;
+    }
+
+    // now check if the black squares are close enough
+    bool ans = true;
+    repi(0, N) 
+        repj(0, N) 
+            if (cell[i][j])
+                ans &= dist(i, j) <= T;
+    println(ans ? "YES" : "NO");
 
     return 0;
 }

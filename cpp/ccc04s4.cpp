@@ -64,80 +64,66 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
-    }
-};
+// See rpeng's solution on the MMHS website
+int x, y, z, ex, ey, ez;
 
-int N;
-string s;
-Hash h;
+void forward(int amt) { // Assuming forward X direction
+    ex -= amt;
+}
 
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
+void rot90H() {
+    swap(ex, ey);
+    ex *= -1;
+}
 
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
+void rot90V() {
+    swap(ex, ez);
+    ez *= -1;
+}
+
+double dis(int x1, int y1, int z1) {
+    return sqrt(x1 * x1 + y1 * y1 + z1 * z1);
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
+    scan(x, y, z, ex, ey, ez);
+    ex -= x;
+    ey -= y;
+    ez -= z;
 
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
-    }
-    println(l);
+    int amt; char t;
+    double best = numeric_limits<double>::max();
+    do {
+        scan(amt, t);
+        mina(best, dis(ex, ey, ez));
+        if ((ex <= amt && ex >= 0) || (ex >= amt && ex <= 0)) // find distance to point closest to line
+            mina(best, dis(0, ey, ez));
+        forward(amt);
+        mina(best, dis(ex, ey, ez));
+
+        if (t == 'U') {
+            rot90V();
+        }
+        else if (t == 'D') {
+            rot90V();
+            rot90V();
+            rot90V();
+        }
+        else if (t == 'R') {
+            rot90H();
+        }
+        else if (t == 'L') {
+            rot90H();
+            rot90H();
+            rot90H();
+        }
+    } while (t != 'E');
+
+    setprec(cout, 2);
+    println(best);
 
     return 0;
 }

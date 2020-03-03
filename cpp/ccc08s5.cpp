@@ -64,80 +64,36 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
-    }
-};
+#define CHECK(a, b, c, d) ret |= !solve(a, b, c, d)
 
-int N;
-string s;
-Hash h;
-
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
-
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
+const int MN = 31;
+int dp[MN][MN][MN][MN];
+bool solve(int a, int b, int c, int d) {
+    if (a < 0 || b < 0 || c < 0 || d < 0) return true; // invalid move.  Other player couldn't make a move
+    int &ret = dp[a][b][c][d];
+    if (ret != -1) return ret;
+    ret = 0;
+    CHECK(a - 2, b - 1, c, d - 2);
+    CHECK(a - 1, b - 1, c - 1, d - 1);
+    CHECK(a, b, c - 2, d - 1);
+    CHECK(a, b - 3, c, d);
+    CHECK(a - 1, b, c, d - 1);
+    // db(a); db(b); db(c); db(d); db(ret); dbln;
+    return ret;
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
-
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    memset(dp, -1, sizeof dp);
+    int T; scan(T);
+    while (T--) {
+        int a, b, c, d;
+        scan(a, b, c, d);
+        bool ans = solve(a, b, c, d);
+        println(ans ? "Patrick" : "Roland");
     }
-    println(l);
 
     return 0;
 }

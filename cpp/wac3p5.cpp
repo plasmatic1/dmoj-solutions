@@ -64,80 +64,70 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
+struct Rod {
+    int l, v;
+    bool operator<(const Rod o) const {
+        return l == o.l ? v < o.v : l < o.l;
     }
 };
 
+const int MN = 5001;
 int N;
-string s;
-Hash h;
-
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
-
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
-}
+Rod rods[MN];
+ll dp[MN][MN], pmin[MN][MN], psum[MN];
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
+    scan(N);
+    repi(1, N + 1)
+        scan(rods[i].l, rods[i].v);
+    sort(rods + 1, rods + N + 1);
 
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    // init stuff
+    repi(1, N + 1)
+        psum[i] = psum[i - 1] + rods[i].v;
+
+    // dp - init
+    memset(dp, 0x3f, sizeof dp);
+    dp[0][0] = 0LL;
+    repi(1, N + 1)
+        dp[i][0] = dp[i - 1][0] + rods[i - 1].v;
+    // dp
+    repi(1, N + 1) {
+        // db(i); db(rods[i].l); db(rods[i].v); dbln;
+        repj(1, i) { 
+            int target = rods[i].l - rods[j].l; // has to be less than target | A + B < C, A < C - B
+            int maxId = upper_bound(rods, rods + j, Rod{target, INF}) - rods;
+            // db(i); db(j); db(target); db(maxId); dbln;
+            // ll mn = LLINF;
+            // repk(0, maxId) {
+            //     mina(mn, dp[j][k]);
+            //     db(i); db(j); db(k); db(dp[j][k]); db(mn); dbln;
+            // }
+            // dp[i][j] = mn;
+            dp[i][j] = pmin[j][maxId - 1];
+
+            // between cost
+            dp[i][j] += psum[i - 1] - psum[j];
+            
+            // db(i); db(j); db(dp[i][j]); dbln;
+        }
+
+        // calculate prefix min 
+        pmin[i][0] = dp[i][0];
+        repj(1, i)
+            pmin[i][j] = min(pmin[i][j - 1], dp[i][j]);
     }
-    println(l);
+
+    ll best = LLINF, add = 0;
+    reprev(i, N, -1) {
+        repj(0, i)
+            mina(best, dp[i][j] + add);
+        add += rods[i].v;
+    }
+    println(best);
 
     return 0;
 }

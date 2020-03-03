@@ -64,80 +64,147 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
+const int MN = 1e5 + 1;
+int N, Q,
+    dp1[MN], dp2[MN], par[MN], cid[MN]; // cid -> child number
+vi vals[MN], g[MN], lhsDown[MN], rhsDown[MN];
+vec<pii> lhs[MN], rhs[MN];
+
+// more stuff
+int lv[MN];
+
+void dfs(int c, int p, int ccid) {
+    par[c] = p;
+    cid[c] = ccid;
+    lv[c] = p == -1 ? 0 : lv[p] + 1;
+
+    int mx1 = 0, mx2 = 0, sz = g[c].size();
+    lhs[c].resize(sz);
+    lhsDown[c].resize(sz);
+    repi(0, sz) {
+        int to = g[c][i];
+        if (to ^ p) {
+            dfs(to, c, i);
+            dp2[c] = max(dp2[c], dp2[to]);
+            int alt = dp1[to] + 1;
+            if (alt >= mx1) {
+                mx2 = mx1;
+                mx1 = alt;
             }
+            else if (alt >= mx2)
+                mx2 = alt;
         }
+        lhs[c][i] = {mx1, mx2};
+        lhsDown[c][i] = i > 0 ? max(lhsDown[c][i - 1], dp2[to]) : dp2[to];
     }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
+    dp1[c] = mx1;
+    dp2[c] = max(dp2[c], mx1 + mx2);
+
+    // build rhs 
+    mx1 = 0, mx2 = 0;
+    rhs[c].resize(sz);
+    rhsDown[c].resize(sz);
+    reprev(i, sz - 1, -1) {
+        int to = g[c][i];
+        if (to ^ p) {
+            int alt = dp1[to] + 1;
+            if (alt >= mx1) {
+                mx2 = mx1;
+                mx1 = alt;
+            }
+            else if (alt >= mx2)
+                mx2 = alt;
         }
-        return ret;
+        rhs[c][i] = {mx1, mx2};
+        rhsDown[c][i] = i < sz - 1 ? max(rhsDown[c][i + 1], dp2[to]) : dp2[to];
     }
-};
 
-int N;
-string s;
-Hash h;
+    // db(c); db(dp1[c]); db(dp2[c]); dbln;
+}
 
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
+int top2(int a, int b, int c, int d) {
+    static int vals[4];
+    vals[0] = a; vals[1] = b; vals[2] = c; vals[3] = d;
+    sort(vals, vals + 4);
+    return vals[3] + vals[2];
+}
 
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
+int dpup1[MN], dpup2[MN];
+
+void up(int c) {
+    if (dpup1[c] != -1) return;
+    if (par[c] == -1) {
+        dpup1[c] = dpup2[c] = 0;
+        return;
     }
-    return false;
+    up(par[c]); // first do parent
+
+    // we do not speak of this
+    int gpsz = g[par[c]].size(), cc = cid[c];
+    vi vals{0, 0};
+    if (cc > 0) {
+        auto tmp = lhs[par[c]][cc - 1];
+        vals.pb(tmp.first);
+        vals.pb(tmp.second);
+        int tmp2 = lhsDown[par[c]][cc - 1];
+        dpup1[c] = max(dpup1[c], max(tmp.first, tmp.second));
+        dpup2[c] = max(dpup2[c], tmp2);
+    }
+    if (cc < gpsz - 1) {
+        auto tmp = rhs[par[c]][cc + 1];
+        vals.pb(tmp.first);
+        vals.pb(tmp.second);
+        int tmp2 = rhsDown[par[c]][cc + 1];
+        dpup1[c] = max(dpup1[c], max(tmp.first, tmp.second));
+        dpup2[c] = max(dpup2[c], tmp2);
+    }
+    dpup1[c] = max(dpup1[c], dpup1[par[c]]);
+    dpup1[c]++;
+    vals.pb(dpup1[par[c]] - 1 + 1);
+    sort(all(vals), greater<int>());
+    // db(c); db(vals); db(dpup1[c]); dbln;
+    dpup2[c] = max(dpup2[c], vals[0] + vals[1]);
+    dpup2[c] = max(dpup2[c], dpup2[par[c]]);
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
-
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    scan(N, Q);
+    repi(1, N) {
+        int a, b;
+        scan(a, b);
+        g[a].pb(b);
+        g[b].pb(a);
     }
-    println(l);
+
+    // preprocess
+    memset(dpup1, -1, sizeof dpup1);
+    dfs(1, -1, -1);
+    // dbarr(dp1 + 1, N); dbln;
+    repi(1, N + 1)
+        up(i);
+    repi(1, N + 1) {
+        for (int to : g[i])
+            if (to ^ par[i])
+                vals[i].pb(dp2[to]);
+        if (i != 1) vals[i].pb(dpup2[i]);
+        sort(all(vals[i]), greater<int>());
+        // assert(vals[i].size() == g[i].size());
+
+        // db(i); db(vals[i]); dbln;
+    }
+
+    // answer queries
+    while (Q--) {
+        int a, b;
+        scan(a, b);
+        if (vals[a].size() < (size_t)b)
+            println(-1);
+        else
+            println(vals[a][b - 1] + 1);
+    }
 
     return 0;
 }

@@ -64,80 +64,68 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
-    }
-};
+const int MN = 1e5 + 1;
+int N, Q;
+ll deg[MN];
+uset<int> nodes,
+    vals[2];
 
-int N;
-string s;
-Hash h;
+void rem(int node) {
+    uset<int> &s = vals[deg[node] & 1];
+    s.erase(s.find(node));
+}
+void ins(int node) {
+    uset<int> &s = vals[deg[node] & 1];
+    s.insert(node);
+}
 
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
-
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
+// dsu stuffs
+int dsu[MN], sz[MN];
+void init() {
+    iota(dsu, dsu + MN, 0);
+    fill(sz, sz + MN, 1);
+}
+int rt(int x) { return dsu[x] == x ? x : dsu[x] = rt(dsu[x]); }
+void unite(int x, int y) {
+    int rx = rt(x), ry = rt(y);
+    if (rx == ry) return;
+    sz[rx] += sz[ry];
+    dsu[ry] = rx;
+    // db(x); db(y); db(rx); db(ry); db(sz[rx]); db(sz[ry]); dbln;
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
+    scan(N, Q);
+    
+    // init
+    repi(1, N + 1)
+        vals[0].insert(i);
+    init();
 
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    // answer queries
+    repi(0, Q) {
+        int a, b; ll degadd;
+        scan(a, b, degadd);
+
+        if (degadd & 1) { // parity changes
+            rem(a); rem(b);
+            deg[a] += degadd; deg[b] += degadd;
+            ins(a); ins(b);
+        }
+
+        // update dsu and stuff
+        nodes.insert(a); nodes.insert(b);
+        unite(a, b);
+
+        // db(a); db(b); db(sz[rt(a)]); db(vals[0].size()); db(vals[1].size()); dbln;
+
+        // answer query
+        bool work = sz[rt(a)] == (int)nodes.size() && vals[1].size() <= (size_t)2;
+        println(work ? "YES" : "NO");
     }
-    println(l);
 
     return 0;
 }

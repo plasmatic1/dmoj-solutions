@@ -64,7 +64,6 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
 const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
 using HashType = ll;
 struct Hash {
@@ -86,7 +85,7 @@ struct Hash {
     inline ll hash(int i, int L, int R) {
         return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
     }
-    HashType hash(int L, int R) {
+    inline HashType hash(int L, int R) {
         HashType ret = 0;
         for (int i = 0; i < PC; i++) {
             ret <<= 32;
@@ -96,48 +95,50 @@ struct Hash {
     }
 };
 
+const int MN = 2e6 + 1;
 int N;
-string s;
+vec<string> strs;
+umap<ll, int> pre;
 Hash h;
-
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
-
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
-}
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
+    // input
+    scan(N);
+    strs.resize(N);
+    repi(0, N)
+        scan(strs[i]);
+    reverse(all(strs));
 
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    // dp
+    repi(0, N) {
+        h.init(strs[i]);
+        int len = strs[i].length();
+        ll hval = h.hash(1, len);
+        auto ptr = pre.find(hval);
+
+        // get dp
+        int dpv = 0;
+        if (ptr == pre.end()) dpv = 1;
+        else dpv = ptr->second + 1;
+        // db(i); db(dpv); dbln;
+        
+        // push to ds
+        repj(1, len + 1) {
+            ll hval = h.hash(1, j);
+            if (hval == h.hash(len - j + 1, len)) {
+                maxa(pre[hval], dpv);
+            }
+        }
     }
-    println(l);
+
+    // get answer
+    int best = 0;
+    for (auto pp : pre)
+        maxa(best, pp.second);
+    println(best);
 
     return 0;
 }

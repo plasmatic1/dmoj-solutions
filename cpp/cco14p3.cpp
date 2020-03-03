@@ -64,80 +64,96 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
-    }
-};
+const ll MOD = 1e9 + 7;
+const int MN = 201;
+int N, M, W,
+    indeg[MN];
+ll dp[MN][MN][2];
+vec<pair<int, bool>> g[MN];
 
-int N;
-string s;
-Hash h;
-
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
-
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
-}
+ll madd(ll a, ll b) { return (a + b) % MOD; }
+ll mmul(ll a, ll b) { return (a * b) % MOD; }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
-
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    scan(N, W, M);
+    repi(0, M) {
+        char t; int a, b;
+        scan(t, a, b);
+        g[a].emplace_back(b, t == 'D'); // (adjacent player, assuming current player is a werewolf, what is the type of the adjacent player (werewolf or civillian))
+        indeg[b]++;
     }
-    println(l);
+
+    // init
+    repi(1, N + 1) {
+        if (g[i].empty()) {
+            dp[i][0][0] = 1; // first isn't werewolf
+            dp[i][1][1] = 1; // first is werewolf
+        }
+    }
+
+    // dp
+    reprev(i, N, 0) {
+        if (!g[i].empty()) {
+            repj(0, 2) {
+                vec<ll> freq(W + 1, 0), aux(W + 1, 0);
+                freq[0] = 1LL;
+                for (auto to_ : g[i]) {
+                    int to = to_.first; bool t = to_.second;
+
+                    // merge frequency arrays
+                    repk(0, W + 1) {
+                        rep(l, 0, W + 1) {
+                            int target = k + l;
+                            if (target > W) continue;
+
+                            // werewolf can only defend werewolf and accuse civillian
+                            ll adjAdd = madd(dp[to][l][t], j ? 0LL : dp[to][l][!t]);
+                            // db(to); db(t); db(i); db(j); db(k); db(l); db(dp[to][l][0]); db(dp[to][l][1]); db(freq[k]); db(target); db(aux[target]); dbln;
+                            aux[target] = madd(aux[target], mmul(freq[k], adjAdd));
+                        }
+                    }
+
+                    // reset req array stuff for next child
+                    swap(aux, freq);
+                    fill(all(aux), 0);
+                }
+
+                // set dp array to frequency table value
+                repk(j, W + 1)
+                    dp[i][k][j] = freq[k - j];
+                
+                // dblb("final dp"); db(i); db(j); dbln;
+                // repk(0, W + 1)
+                //     db(k), db(dp[i][k][j]), dbln;
+            }
+        }
+    }
+
+    // get total
+    vec<ll> freq(W + 1, 0), aux(W + 1, 0);
+    freq[0] = 1LL;
+    repi(1, N + 1) {
+        if (indeg[i] == 0) {
+            // merge frequency arrays
+            repj(0, W + 1) {
+                repk(0, W + 1) {
+                    int target = j + k;
+                    if (target > W) continue;
+
+                    ll dpAdd = madd(dp[i][k][0], dp[i][k][1]);
+                    aux[target] = madd(aux[target], mmul(freq[j], dpAdd));
+                }
+            }
+
+            // reset req array stuff for next node 
+            swap(aux, freq);
+            fill(all(aux), 0);
+        }
+    }
+    println(freq[W]);
 
     return 0;
 }

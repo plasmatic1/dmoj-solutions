@@ -64,80 +64,47 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-// rabin-karp
-const int PC = 2, MOD[PC] = {1000000007, 1000000007}, BASE[PC] = {131, 71};
-using HashType = ll;
-struct Hash {
-    vec<ll> pow[PC], hsh[PC];
-    void init(string s, char zeroChar = 'a') {
-        int len = s.length();
-        for (int i = 0; i < PC; i++) {
-            pow[i].resize(len + 1);
-            hsh[i].resize(len + 1);
-        }
-        for (int i = 0; i < PC; i++) {
-            pow[i][0] = 1LL;
-            for (int j = 1; j <= len; j++) {
-                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
-                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
-            }
-        }
-    }
-    inline ll hash(int i, int L, int R) {
-        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
-    }
-    HashType hash(int L, int R) {
-        HashType ret = 0;
-        for (int i = 0; i < PC; i++) {
-            ret <<= 32;
-            ret |= hash(i, L, R);
-        }
-        return ret;
-    }
-};
+using pii = pair<int, int>;
+const int MN = 51, MT = 1001;
+int N, S,
+    e[MN], h[MN], p[MN];
+pii dp[MN][MT];
 
-int N;
-string s;
-Hash h;
-
-#include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-const ll RANDOM = chrono::high_resolution_clock::now().time_since_epoch().count();
-struct chash {
-    ll operator()(ll x) const { return x ^ RANDOM; }
-};
-using christopher_trevisan = gp_hash_table<ll, null_type, chash>;
-
-christopher_trevisan used;
-bool check(int sz) {
-    if (!sz) return true;
-    used.clear();
-    int end = N - sz + 1;
-    repi(1, end + 1) {
-        auto chash = h.hash(i, i + sz - 1);
-        if (used.find(chash) != used.end())
-            return true;
-        used.insert(chash);
-    }
-    return false;
+bool cmp(const pii a, const pii b) {
+    return a.first == b.first ? a.second > b.second : a.first < b.first;
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, s);
-    h.init(s);
-
-    int l = 0, r = N + 1;
-    while (l + 1 < r) {
-        int mid = (l + r) / 2;
-        if (check(mid))
-            l = mid;
-        else
-            r = mid;
+    scan(N);
+    repi(1, N + 1) {
+        scan(h[i], e[i], p[i]);
     }
-    println(l);
+    scan(S);
+
+    // dp
+    repi(1, N + 1) {
+        repj(1, S + 1) {
+            int cost = 0, happ = 0;
+            repk(0, 101) {
+                if (j - cost < 0) continue;
+                auto &alt = dp[i - 1][j - cost];
+                dp[i][j] = max(dp[i][j], {alt.first + happ, alt.second + k}, cmp);
+
+                cost += p[i];
+                happ += h[i] - k * e[i];
+            }
+        }
+    }
+
+    // get total
+    pii best;
+    repj(0, S + 1)
+        best = max(best, dp[N][j], cmp);
+    println(best.first);
+    println(best.second);
 
     return 0;
 }
