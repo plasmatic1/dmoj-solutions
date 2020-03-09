@@ -1,0 +1,1 @@
+print(max([(lambda x: sum(x) - min(x))(list(map(int, input().split()))) for _ in range(2)]))
