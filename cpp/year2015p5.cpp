@@ -64,64 +64,87 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+// rabin-karp
+const int PC = 2, MOD[PC] = {1000000007, 1000000009}, BASE[PC] = {131, 10007};
+using HashType = ll;
+struct Hash {
+    vec<ll> pow[PC], hsh[PC];
+    void init(string s, char zeroChar = 0) {
+        int len = s.length();
+        for (int i = 0; i < PC; i++) {
+            pow[i].resize(len + 1);
+            hsh[i].resize(len + 1);
+        }
+        for (int i = 0; i < PC; i++) {
+            pow[i][0] = 1LL;
+            for (int j = 1; j <= len; j++) {
+                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
+                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1] - zeroChar) % MOD[i];
+            }
+        }
+    }
+    inline ll hash(int i, int L, int R) {
+        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
+    }
+    inline HashType hash(int L, int R) {
+        HashType ret = 0; 
+        for (int i = 0; i < PC; i++) {
+            ret <<= 32LL;
+            ret |= hash(i, L, R);
+        }
+        return ret;
+    }
+    inline ll hashOther(int i, string &s, char zeroChar = 0) {
+        ll ret = 0; for (auto ch : s) ret = (ret * BASE[i] + ch - zeroChar) % MOD[i];
+        return ret;
+    }
+    inline HashType hashOther(string &s, char zeroChar = 0) {
+        HashType ret = 0;
+        for (int i = 0; i < PC; i++) {
+            ret <<= 32LL;
+            ret |= hashOther(i, s, zeroChar);
+        }
+        return ret;
+    }
+};
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
-}
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
-}
+const int MN = 2011;
+int N, M;
+string s,
+    mat[MN];
+Hash h;
+uset<ll> has;
+bitset<MN> reach[MN];
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    scan(s, M);
+    N = s.length();
+    repi(0, M) scan(mat[i]);
+    h.init(s);
 
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    repi(0, M) {
+        ll hsh = h.hashOther(mat[i]);
+        has.insert(hsh);
     }
-    
-    println(dp[N]);
+
+    // do the dp
+    reprev(i, N, 0) {
+        repj(i + 1, N + 2) {
+            assert(h.hash(i, j - 1) >= 0);
+            if (has.find(h.hash(i, j - 1)) != has.end()) {
+                reach[i][j] = true;
+                reach[i] |= reach[j];
+            }
+        }
+    }
+
+    // get ans
+    int ans = 0;
+    repi(1, N + 1) ans += reach[i].count();
+    println(ans);
 
     return 0;
 }

@@ -64,64 +64,106 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
+struct line {
+    int b, m, i;
+    Cmplt(line) { return m == o.m ? b > o.b : m < o.m; }
+};
+
 /*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+y=ax+b
+y=cx+d
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
+(c-a)x+(d-b)=0
+(c-a)x=-(d-b)
+x=-(d-b)/(c-a)
 */
 
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
+const int MN = 1e5 + 1, MQ = 5e5 + 1;
+int N, Q,
+    ans[MQ];
+line lines[MN];
+pii qus[MQ];
 
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
+ld eval(int i, ld x) {
+    return lines[i].m * x + lines[i].b;
 }
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
+
+ld inter(int i, int j) {
+    return -ld(lines[j].b - lines[i].b) / (lines[j].m - lines[i].m);
+}
+
+const ld EPS = 1e-10;
+bool skip(int i, int j, int k) {
+    ld i1 = inter(i, k), i2 = inter(i, j);
+    // db(i); db(j); db(k); db(i1); db(i2); dbln;
+    return abs(i1 - i2) > EPS && i1 < i2;
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    scan(N, Q);
+    repi(0, N) {
+        int b, m; scan(b, m);
+        lines[i] = {b, m, i};
+    }
+    sort(lines, lines + N);
+    repi(0, Q) {
+        int x; scan(x);
+        qus[i] = mpr(x, i);
+    }
+    sort(qus, qus + Q);
 
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
+    // get convex hull
+    vi dq;
+    repi(0, N) {
+        if (i > 0 && lines[i].m == lines[i - 1].m) continue; // line definitely will never be used
+        while (sz(dq) >= 2 && skip(dq[dq.size() - 2], dq.back(), i))
             dq.pop_back();
         dq.pb(i);
     }
-    
-    println(dp[N]);
+
+    // make "important" map
+    map<ld, int> important;
+    important[-1e18] = lines[dq[0]].i;
+    int sz = sz(dq);
+    repi(1, sz) {
+        ld i1 = inter(dq[i - 1], dq[i]);
+        if (i1 > 500010) continue;
+        // db(i); db(i1); db(dq[i]); db(lines[dq[i]].i); dbln;
+
+        // at intersection
+        int id = min(lines[dq[i]].i, lines[dq[i - 1]].i);
+        if (important.find(i1) == important.end())
+            important[i1] = id;
+        else 
+            mina(important[i1], id);
+
+        // post intersection
+        i1 += EPS;
+        important[i1] = lines[dq[i]].i;
+    }
+
+    // setprec(cout, 15);
+    // for (auto p : important)
+    //     dba("x", p.first), dba("id", p.second), dbln;
+
+    // answer queries
+    deque<pair<ld, int>> dq2(all(important)); // x-pos, id
+    int cans = -1;
+    repi(0, Q) {
+        auto q = qus[i];
+        while (!dq2.empty() && dq2[0].first <= q.first) {
+            cans = dq2[0].second;
+            dq2.pop_front();
+        }
+        ans[q.second] = cans;
+    }
+
+    // output
+    repi(0, Q)
+        println(ans[i]);
 
     return 0;
 }

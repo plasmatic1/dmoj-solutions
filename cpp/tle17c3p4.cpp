@@ -64,64 +64,62 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+const int MN = 1001;
+int N, K, pos;
+double dp[MN][MN]; // i -> number of players, j -> position
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
-}
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
+double dieChance(int numPlayers, int position) {
+    int tot = numPlayers + K, touch = tot / numPlayers + (position <= tot % numPlayers);
+    return double(touch) / tot;
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    scan(N, K, pos);
+    setprec(cout, 15);
 
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    if (N > 1000) {
+        assert(K <= 2);
+        if (K == 0) println(1. / N);
+        else if (K == 1) {
+            ld div = 2. / (ll(N + 1) * N);
+            println(div * pos);
+        }
+        else if (K == 2) {
+            ld mx = 2. / (N + 2), dif = mx / (N + 1);
+            int subAmt = min(N - 2, N - pos);
+            println(mx - dif * subAmt);
+        }
+
+        return 0;
     }
-    
-    println(dp[N]);
+
+    // do the dp
+    dp[1][1] = 1.;
+    repi(2, N + 1) {
+        int changePos = (i + K) % i;
+        double chanceAfter = double((i + K) / i) / (i + K), chanceBefore = double((i + K) / i + 1) / (i + K);
+        // db(i); db(changePos); db(chanceAfter); db(chanceBefore); dbln;
+        repj(1, i + 1) {
+            // db(i); db(j); db(min(j - 1, changePos)); db(max(0, j - 1 - changePos)); db(max(0, changePos - j)); db(min(i - j, i - changePos)); dbln;
+            dp[i][j] += chanceBefore * min(j - 1, changePos) * dp[i - 1][j - 1];
+            dp[i][j] += chanceAfter * max(0, j - 1 - changePos) * dp[i - 1][j - 1];
+            dp[i][j] += chanceBefore * max(0, changePos - j) * dp[i - 1][j];
+            dp[i][j] += chanceAfter * min(i - j, i - changePos) * dp[i - 1][j];
+
+            // repk(1, i + 1) {
+            //     if (k == j) continue;
+            //     double ch = dieChance(i, k);
+            //     dp[i][j] += ch * dp[i - 1][j - (k < j)];
+            // }
+            // db(i); db(j); db(dp[i][j]); dbln;
+        }
+    }
+
+    println(dp[N][pos]);
+    // dbarr(dp[N], N + 1); dbln;
 
     return 0;
 }

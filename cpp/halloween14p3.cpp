@@ -64,64 +64,80 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+// rabin-karp
+const int PC = 2, MOD[PC] = {1000000007, 1000000009}, BASE[PC] = {131, 151};
+using HashType = ll;
+struct Hash {
+    vec<ll> pow[PC], hsh[PC];
+    void init(string s) {
+        int len = s.length();
+        for (int i = 0; i < PC; i++) {
+            pow[i].resize(len + 1);
+            hsh[i].resize(len + 1);
+        }
+        for (int i = 0; i < PC; i++) {
+            pow[i][0] = 1LL;
+            for (int j = 1; j <= len; j++) {
+                pow[i][j] = (pow[i][j - 1] * BASE[i]) % MOD[i];
+                hsh[i][j] = (hsh[i][j - 1] * BASE[i] + s[j - 1]) % MOD[i];
+            }
+        }
+    }
+    inline ll hash(int i, int L, int R) {
+        return (hsh[i][R] - (hsh[i][L - 1] * pow[i][R - L + 1]) % MOD[i] + MOD[i]) % MOD[i];
+    }
+    inline HashType hash(int L, int R) {
+        HashType ret = 0; 
+        for (int i = 0; i < PC; i++) {
+            ret <<= 32LL;
+            ret |= hash(i, L, R);
+        }
+        return ret;
+    }
+};
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
-}
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
-}
+const int MN = 5001;
+int N;
+string s;
+Hash h;
+vl spells,
+    hashes[MN];
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    scan(s);
+    N = s.length();
+    h.init(s);
 
-    // CHT
-    deque<int> dq; dq.pb(0);
+    // get spells vector
     repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+        int end = N * 2 - i + 1;
+        repj(0, i) hashes[j].clear();
+        repj(1, end + 1) hashes[(j - 1) % i].pb(h.hash(j, j + i - 1));
+
+        repj(0, i) {
+            int ind = j, preind = -1;
+            ll pre = LLONG_MAX;
+            for (auto hsh : hashes[j]) {
+                if (hsh != pre) {
+                    preind = ind;
+                    pre = hsh;
+                }
+                else {
+                    ll tmp = h.hash(preind + 1, ind + i - 1 + 1);
+                    spells.pb(tmp);
+                }
+                ind += i;
+            }
+        }
     }
-    
-    println(dp[N]);
+
+    // count number of unique spells
+    sort(all(spells));
+    spells.resize(unique(all(spells)) - spells.begin());
+    println(spells.size());
 
     return 0;
 }

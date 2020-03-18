@@ -64,64 +64,39 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
-
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
-}
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
-}
-
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    int pre = -1;
+    vec<bool> parity;
+    vi dsu;
+    function<int(int)> rt = [&] (int x) {
+        return dsu[x] == x ? x : dsu[x] = rt(dsu[x]);
+    };
 
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    int Q;
+    scan(Q);
+    while (Q--) {
+        int T; scan(T);
+        if (T == 1) {
+            int num = dsu.size();
+            dsu.pb(num);
+            parity.pb(0);
+            pre = num;
+        }
+        else if (T == 2) {
+            int num = dsu.size(), par = parity[rt(pre)];
+            dsu.pb(num);
+            parity.pb(par ^ 1);
+            dsu[rt(pre)] = rt(num);
+            pre = num;
+        }
+        else {
+            int x; scan(x);
+            println(parity[x - 1] == parity[rt(x - 1)]);
+        }
     }
-    
-    println(dp[N]);
 
     return 0;
 }

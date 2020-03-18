@@ -64,64 +64,108 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+struct DSU {
+    vector<int> dsu;
+    void init(int N) { dsu.resize(N); iota(dsu.begin(), dsu.end(), 0); }
+    int rt(int x) { return dsu[x] == x ? x : dsu[x] = rt(dsu[x]); }
+    void merge(int x, int y) { dsu[rt(x)] = rt(y); }
+    bool same(int x, int y) { return rt(x) == rt(y); }
+} dsu;
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
+struct edge {
+    int a, b, w;
+    Cmplt(edge) { return w < o.w; }
+};
 
-(X + T)^2
-X^2 + 2XT + T^2
+const int MN = 21, MM = 401, MSUB = 1 << 20;
+int N, M, K, sz, 
+    cost[MSUB], dp[MSUB];
+edge edges[MM];
 
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
+void rec(int state, int costState, int idx) {
+    if (popcount(costState) == sz) {
+        mina(dp[state], dp[state ^ costState] + cost[costState]);
+        return;
+    }
 
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
-}
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
+    if ((state >> idx) & 1) {
+        int req = sz - popcount(costState), left = popcount(state >> idx);
+        if (left == req) rec(state, costState | (1 << idx), idx + 1);
+        else {
+            rec(state, costState | (1 << idx), idx + 1);
+            rec(state, costState, idx + 1);
+        }
+    }
+    else rec(state, costState, idx + 1);
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
-
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    scan(N, M, K);
+    if (N % K != 0) {
+        println(-1);
+        return 0;
     }
-    
-    println(dp[N]);
+    sz = N / K;
+    int msub = 1 << N;
+
+    repi(0, M) {
+        scan(edges[i].a, edges[i].b, edges[i].w);
+        edges[i].a--; edges[i].b--;
+    }
+    sort(edges, edges + M);
+
+    // precompute MST
+    memset(cost, 0x3f, sizeof cost);
+    repi(0, msub) {
+        if (popcount(i) == sz) {
+            dsu.init(N);
+
+            int ccost = 0;
+            repj(0, M) {
+                auto &ed = edges[j];
+                if (!((i >> ed.a) & 1) || !((i >> ed.b) & 1)) continue; // has to be for the current set of nodes
+                if (!dsu.same(ed.a, ed.b)) {
+                    ccost += ed.w;
+                    dsu.merge(ed.a, ed.b);
+                }
+            }
+
+            bool valid = true; // is valid mst
+            int root = -1;
+            repj(0, N) {
+                if ((i >> j) & 1) {
+                    if (root == -1) root = dsu.rt(j);
+                    else if (dsu.rt(j) != root) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+
+            if (valid) cost[i] = ccost;
+        }
+    }
+
+    // precompute valid masks
+    vi msk;
+    repi(1, msub) {
+        if (popcount(i) % sz == 0)
+            msk.pb(i);
+    }
+    sort(all(msk), [] (const int &a, const int &b) { return popcount(a) < popcount(b); });
+
+    // do dp
+    memset(dp, 0x3f, sizeof dp);
+    dp[0] = 0;
+    for (auto i : msk) {
+        rec(i, 0, 0);
+        // db(i); dbbin(i, 20); db(dp[i]); dbln;
+    }
+
+    println(dp[msub - 1] == INF ? -1 : dp[msub - 1]);
 
     return 0;
 }

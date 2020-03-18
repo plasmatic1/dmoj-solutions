@@ -64,64 +64,54 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+ll N;
+int M, Q;
+vi id[26];
+string s;
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
+// multiplication modulo M without overflow, 5 lines
+ll fmul(ll x, ll y, ll mod) {
+    if (!y) return 0LL;
+    return (fmul((x + x) % mod, y >> 1, mod) + ((y & 1) ? x : 0LL)) % mod;
 }
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
+// triangular numbers
+ll tri(ll x) {
+    ll a = x, b = x + 1;
+    if (a % 2 == 0) a /= 2;
+    if (b % 2 == 0) b /= 2;
+    return fmul(a, b, M);
+}
+
+// counting
+int cnt(int let, int l, int r) {
+    return upper_bound(all(id[let]), r) - lower_bound(all(id[let]), l);
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    scan(N, s, Q);
+    M = s.length();
 
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    repi(0, M)
+        id[s[i] - 'A'].pb(i);
+
+    while (Q--) {
+        ll r; char c;
+        scan(r, c);
+        int clet = c - 'A';
+
+        ll full = r / M, rem = r % M, initMod = tri(r - 1), ans = 0;
+        ans += full * id[clet].size();
+
+        ll lb = initMod, rb = initMod + rem - 1;
+        ans += cnt(clet, lb, min(rb, ll(M) - 1));
+        if (rb >= M)
+            ans += cnt(clet, 0, rb - M);
+
+        println(ans);
     }
-    
-    println(dp[N]);
 
     return 0;
 }

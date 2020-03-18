@@ -64,64 +64,110 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+// Andrew dong knows all
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
+struct p {
+    ll x, y;
+};
+inline ll d2(const p &a, const p &b) { // distance squared (euclidian)
+    ll dx = a.x - b.x, dy = a.y - b.y;
+    return dx * dx + dy * dy;
 }
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
+inline double d1(const p &a, const p &b) { return sqrt(d2(a, b)); }
+
+Inop(p) {
+    in >> o.x >> o.y;
+    return in;
+}
+
+using pd = pair<double, double>;
+using vpd = vec<pd>;
+const int MN = 503;
+int N;
+p pts[MN];
+vpd ranges[2][MN];
+
+bool check(int cur) {
+    const double eps = 1e-10;
+    repi(1, N + 1) {
+        double d = d1(pts[i], pts[N + 1]);
+        // db(i); db(j); db(d); dbln;
+        for (auto range : ranges[cur][i]) {
+            if (range.first - eps <= d && d <= range.second + eps)
+                return true;
+        }
+    }
+    return false;
 }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    scan(N);
+    scan(pts[0], pts[N + 1]);
+    repi(1, N + 1) scan(pts[i]);
 
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    // Edge case
+    if (pts[0].x == pts[N + 1].x && pts[0].y == pts[N + 1].y) {
+        println(0);
+        return 0;
     }
-    
-    println(dp[N]);
+
+    // Initial distances
+    repi(1, N + 1) {
+        double d = d1(pts[0], pts[i]);
+        ranges[1][i].emplace_back(d, d);
+    }
+    // ans = 1
+    if (check(1)) {
+        println(1);
+        return 0;
+    }
+
+    repi(2, N + 1) {
+        int cur = i & 1, pre = cur ^ 1;
+
+        repj(1, N + 1) {
+            // Compute ranges
+            ranges[cur][j].clear();
+
+            vpd reduce;
+            repk(1, j) {
+                double d = d1(pts[j], pts[k]);
+                for (auto &range : ranges[pre][k]) {
+                    // db(i); db(j); db(k); db(d); db(range.first); db(range.second); dbln;
+                    reduce.emplace_back(max(max(0., range.first - d), d - range.second), d + range.second);
+                    // assert(ranges[cur][j].back().first >= 0);
+                }
+            }
+
+            // Collapse ranges
+            sort(all(reduce));
+            pd ins{-INF, -INF};
+            for (auto &range : reduce) {
+                if (range.first > ins.second) {
+                    if (ins.first != -INF)
+                        ranges[cur][j].pb(ins);
+                    ins = range;
+                }
+                else 
+                    maxa(ins.second, range.second);
+            }
+            if (ins.first != -INF)
+                ranges[cur][j].pb(ins);
+
+            // db(i); db(j); dbln;
+            // for (auto x : ranges[cur][j]) dbp("r", x.first, x.second), dbln;
+        }
+
+        if (check(cur)) {
+            println(i);
+            return 0;
+        }
+    }
+
+    println(-1);
 
     return 0;
 }

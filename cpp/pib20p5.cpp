@@ -65,63 +65,45 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #pragma endregion
 
 /*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+idea: first, we assume that array V is all 0s, then we take K in respect to that.
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
+To make K satisfy the constraints, we shift all elements in it so that the original median of K is now 0.
+This is done by shifting all the elements in array A (which is done by shifting all the elements in array V)
 
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
+Also note that with this method, "NO" is never printed.
 */
 
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
-}
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
-}
+const int MN = 1001;
+int N,
+    val[MN][MN], mid[MN];
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
-
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    // compute mid
+    scan(N);
+    repi(0, N) {
+        repj(1, N) {
+            scan(val[i][j]);
+            val[i][j] += val[i][j - 1];
+        }
     }
-    
-    println(dp[N]);
+    repi(0, N) {
+        vi tmp;
+        repj(0, N)
+            tmp.pb(val[j][i]);
+        sort(all(tmp));
+        mid[i] = tmp[(N - 1) / 2];
+    }
+
+    // compute shift and output
+    sort(mid, mid + N);
+    int trueMid = mid[(N - 1) / 2];
+
+    println("YES");
+    repi(0, N) print(-trueMid, ' ');
+    print('\n');
 
     return 0;
 }

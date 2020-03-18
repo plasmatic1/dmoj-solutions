@@ -65,63 +65,53 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #pragma endregion
 
 /*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
-
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
+https://files.catbox.moe/qcsrcx.jpg
 */
 
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
+struct block {
+    int r, c;
+    Cmplt(block) { return c > o.c; }
+};
 
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
-}
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
-}
+const int MN = 1e9 + 1, MM = 1e5 + 1;
+int N, M;
+block pts[MM];
+
+// x-pos and y-pos
+int x(int i) { return pts[i].c; }
+int y(int i) { return N - pts[i].r + 1; }
+
+// sum of 1+2+3+..N
+ll sumUnder(ll x) { return x * (x + 1) / 2; }
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
+    scan(N, M);
+    repi(0, M)
+        scan(pts[i].r, pts[i].c);
+    sort(pts, pts + M);
 
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    // remove irrelavent
+    vi good;
+    repi(0, M) {
+        while (!good.empty() && y(i) - y(good.back()) >= x(good.back()) - x(i))
+            good.pop_back();
+        good.pb(i);
     }
-    
-    println(dp[N]);
+
+    // count
+    ll tot = 0;
+    int pre = INF;
+    for (auto i : good) {
+        int dif = pre - x(i);
+        tot += sumUnder(y(i)) - sumUnder(max(0, y(i) - dif));
+        // db(i); db(dif); db(pre); db(x(i)); db(y(i)); db(tot); dbln;
+        pre = x(i);
+    }
+
+    println(tot);
 
     return 0;
 }

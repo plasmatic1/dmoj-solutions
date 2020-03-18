@@ -64,64 +64,131 @@ template<typename F, typename... R> string __join_comma(F f, R... r) { return __
 #define dbln cout << endl;
 #pragma endregion
 
-/*
-j<i
-dp[i] = dp[j] + (psum[i] - psum[j] + i - j - 1 - L)^2
+ll gcd(ll a, ll b) { return b ? gcd(b, a % b) : a; }
 
-X = psum[i] + i
-T = -psum[j] - j - L - 1
-
-(X + T)^2
-X^2 + 2XT + T^2
-
-X = psum[i] + i
-M = 2T
-B = dp[j] + T^2
-extra = X^2
-
-ax+b=y
-cx+d=y
-(a-c)x+(b-d)=0
-x=-(b-d)/(a-c)
-*/
-
-const int MN = 2e6 + 1;
-int N, L;
-ll dp[MN], psum[MN];
-
-ll getT(int j) { return -psum[j] - j - L - 1; }
-ll slope(int j) { return 2 * getT(j); }
-ll yint(int j) { return dp[j] + getT(j) * getT(j); }
-ld intersect(int j, int k) { // j<k
-    return -ld(yint(j) - yint(k)) / (slope(j) - slope(k));
+Cmpfn(cmpVec, vi) {
+    assert(a.size() == b.size());
+    repi(0, int(a.size()))
+        if (a[i] != b[i])
+            return a[i] < b[i];
+    return false;
 }
-ll f(int from, int to) {
-    ll cost = psum[to] - psum[from] + to - from - 1 - L;
-    // db(from); db(to); db(cost); dbln;
-    return dp[from] + cost * cost;
+
+const int MN = 5e4 + 1;
+int N,
+    seq[MN];
+
+bool done[MN];
+bool sortByK(int sz, int k, vi &res) {
+    if (done[k]) return false;
+    static vi vals[MN];
+    static int cnt[MN];
+
+    // "countingsort"
+    repi(0, sz) vals[i].clear();
+    repi(0, N) vals[seq[i]].pb(i % k);
+
+    assert(int(res.size()) == N);
+    memset(cnt, 0, sizeof cnt);
+    repi(0, sz) {
+        for (auto group : vals[i]) {
+            // db(i); db(group); db(k); db(cnt[group]); db(cnt[group] * k); db(cnt[group]*k+group); dbln;
+            res[k * cnt[group] + group] = i;
+            cnt[group]++;
+        }
+    }
+    // db(res); dbln;
+    return done[k] = true;
 }
+
+// coord compress
+struct {
+    vi comp;
+    void init() {
+        repi(0, N) comp.pb(seq[i]);
+        sort(all(comp)); comp.resize(unique(all(comp)) - comp.begin());
+    }
+    inline int c(int x) { return lower_bound(all(comp), x) - comp.begin(); }
+    inline int u(int x) { return comp[x]; }
+} C;
+
+// indexOf
+vi idOf[MN];
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    scan(N, L);
-    repi(1, N + 1) scan(psum[i]);
-    partial_sum(psum, psum + N + 1, psum);
-
-    // CHT
-    deque<int> dq; dq.pb(0);
-    repi(1, N + 1) {
-        while (sz(dq) >= 2 && intersect(dq[0], dq[1]) < psum[i] + i)
-            dq.pop_front();
-        dp[i] = f(dq[0], i);
-        // db(i); db(dp[i]); db(dq[0]); db(dp[dq[0]]); dbln;
-        while (sz(dq) >= 2 && intersect(dq[dq.size() - 2], i) < intersect(dq[dq.size() - 2], dq.back()))
-            dq.pop_back();
-        dq.pb(i);
+    vi tmp;
+    scan(N);
+    repi(0, N) {
+        scan(seq[i]);
+        tmp.pb(seq[i]);
     }
-    
-    println(dp[N]);
+    sort(all(tmp));
+
+    // remove all beginning elements already in order
+    int toRemove = 0;
+    repi(0, N) {
+        if (seq[i] == tmp[i]) {
+            toRemove++;
+            print(seq[i], ' ');
+        }
+        else break;
+    }
+    copy(seq + toRemove, seq + N, seq);
+    N -= toRemove;
+
+    // elements are all sorted already
+    if (!N) {
+        print('\n');
+        return 0;
+    }
+
+    // coord. compress
+    C.init();
+    repi(0, N) {
+        seq[i] = C.c(seq[i]);
+        idOf[seq[i]].pb(i);
+    }
+
+    // find smallest element out of order, brute force with all those indexes
+    int mx = *max_element(seq, seq + N);
+    vi ans(N, INF), tmpAns(N, INF);
+    bool found = false;
+    for (int initialElem = 0; initialElem < mx; initialElem++) {
+        for (int i : idOf[initialElem]) {
+            // only the prime numbers matter
+            vi ks;
+            int tmp = i;
+            for (int j = 2; j * j <= tmp; j++) {
+                if (tmp % j == 0) {
+                    ks.pb(j);
+                    while (tmp % j == 0) tmp /= j;
+                }
+            }
+            if (tmp > 1) ks.pb(tmp);
+
+            // try all valid K
+            for (int k : ks) {
+                if (!found) sortByK(C.comp.size(), k, ans);
+                else {
+                    bool isNewK = sortByK(C.comp.size(), k, tmpAns);
+                    if (isNewK && cmpVec(tmpAns, ans)) // short circuit abuse :)
+                        swap(tmpAns, ans);
+                }
+                found = true;
+            }
+        }
+        if (found) break; // found working element
+    }
+    if (!found)
+        copy(seq, seq + N, ans.begin());
+
+    // output
+    // db(ans); dbln;
+    for (auto x : ans) print(C.u(x), ' ');
+    print('\n');
 
     return 0;
 }
