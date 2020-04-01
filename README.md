@@ -1,4 +1,4 @@
 # dmoj-solutions
-~~Some~~ Most of my DMOJ solutions
+~~Some~~ ~~Most~~ All of my DMOJ solutions
 
-To search for the source code of any solution by problem name, run the `problem_search.py` file.
+For better searching, [click here](http://plasmatic1.me/dmojsols/)
