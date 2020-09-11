@@ -34,6 +34,9 @@ LANG_MAP = {
     :CPP14 => 'cpp',
     :CPP17 => 'cpp',
     :CLANGX => 'cpp',
+	
+	:PCPP11 => 'cpp',
+	:PCPP03 => 'cpp',
 
     :C => 'c',
     :C11 => 'c',
