@@ -22,6 +22,7 @@ LANG_MAP = {
     :JAVA9 => 'java',
     :JAVA10 => 'java',
 	:JAVA11 => 'java',
+	:JAVA15 => 'java',
     
     :PY2 => 'py',
     :PY3 => 'py',
