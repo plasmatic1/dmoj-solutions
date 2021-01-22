@@ -4,14 +4,19 @@ require 'json'
 
 ### Constants
 
+# Settings
+SETTINGS_FILE = 'settings.json'
+
 # Problem codes to ignore
 IGNORE = Set.new ['phantomc1', 'joi14p6', 'acc4p4', 'bbc08d']
 
 # Whether debug mode is on (program will retrieve submission data from local file and session id is a set variable)
 DEBUG = false 
 DEBUG_SESSION_ID = nil
+
+# Other Stuff
 subs = nil
-$session_id = nil
+$headers = nil
 
 # Amount of time to wait between requests (in seconds).  Helps prevent being cloudflared
 REQ_DELAY_TIME = 2
@@ -61,24 +66,14 @@ def read_sol(lang, problem_id)
 end
 
 def get_submission_src(sub_id)
-    resp = HTTParty.get "https://dmoj.ca/src/#{sub_id}/raw", cookies: { :sessionid => $session_id }
+    resp = HTTParty.get "https://dmoj.ca/src/#{sub_id}/raw", :headers => $headers
     return resp.body.gsub(/\r/, '')
 end
 
 ### Run code
 
-# Get session id
-if DEBUG
-    $session_id = DEBUG_SESSION_ID
-else
-    puts 'Input the session id (can be found by looking at your cookies):'
-    $session_id = gets
-    puts
-end
-
 # Display running parameters
 puts "Running program with the following parameters:"
-puts "Using session id #{$session_id}"
 puts "Using request delay time #{REQ_DELAY_TIME}secs"
 puts "Ignoring problems #{IGNORE.to_a}"
 puts "Running with languages #{LANGS}"
@@ -107,8 +102,16 @@ puts "Getting global submissions..."
 if DEBUG
     File.open('subs.json') { |f| subs = JSON.parse(f.read) }
 else
-    resp = HTTParty.get 'https://dmoj.ca/api/user/submissions/Plasmatic'
-    subs = JSON.parse(resp.body)
+	File.open(SETTINGS_FILE) do |f|
+		dict = JSON.parse(f.read)
+	
+		puts "Fetching Submissions of handle #{dict['handle']} with API key #{dict['api_key']}"
+		$headers = {
+			"Authorization" => "Bearer #{dict['api_key']}"
+		}
+		resp = HTTParty.get "https://dmoj.ca/api/user/submissions/#{dict['handle']}", :headers => $headers
+		subs = JSON.parse(resp.body)
+	end
 end
 
 puts "Got global submissions!"
