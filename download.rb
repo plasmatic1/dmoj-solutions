@@ -28,6 +28,7 @@ LANG_MAP = {
     :JAVA10 => 'java',
 	:JAVA11 => 'java',
 	:JAVA15 => 'java',
+	:JAVA17 => 'java',
     
     :PY2 => 'py',
     :PY3 => 'py',
@@ -50,8 +51,9 @@ LANG_MAP = {
     :GO => 'go',
     :TEXT => 'txt',
     :NASM => 'nasm',
-    :PERL => 'perl',
-    :RUBY2 => 'ruby',
+    :PERL => 'pl',
+    :RUBY2 => 'rb',
+    :RUBY => 'rb',
 }
 
 # List of languages
